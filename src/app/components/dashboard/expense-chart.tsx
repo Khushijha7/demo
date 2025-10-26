@@ -5,6 +5,8 @@ import React from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { useAllTransactions } from "@/hooks/use-all-transactions";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, query } from "firebase/firestore";
 
 import {
   Card,
@@ -24,7 +26,7 @@ const chartConfig = {
   expenses: {
     label: "Expenses",
   },
-  groceries: { label: "Groceries", color: "hsl(var(--chart-1))" },
+  food: { label: "Food", color: "hsl(var(--chart-1))" },
   transport: { label: "Transport", color: "hsl(var(--chart-2))" },
   housing: { label: "Housing", color: "hsl(var(--chart-3))" },
   entertainment: { label: "Entertainment", color: "hsl(var(--chart-4))" },
@@ -43,7 +45,7 @@ export function ExpenseChart() {
     const expenseTransactions = transactions.filter(t => t.transactionType === 'withdrawal' || t.transactionType === 'payment');
 
     const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
-      const category = transaction.category.toLowerCase();
+      const category = (transaction.category || 'other').toLowerCase();
       const amount = Math.abs(transaction.amount);
       if (!acc[category]) {
         acc[category] = 0;

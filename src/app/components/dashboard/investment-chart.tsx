@@ -2,10 +2,11 @@
 "use client"
 
 import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react"
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from "recharts"
+import { TrendingUp, CalendarDays } from "lucide-react"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query, Timestamp } from "firebase/firestore";
+import { differenceInDays, format } from 'date-fns';
 
 import {
   Card,
@@ -22,8 +23,8 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  gainLoss: {
-    label: "Gain/Loss",
+  invested: {
+    label: "Invested",
     color: "hsl(var(--primary))",
   },
 }
@@ -37,21 +38,15 @@ interface Investment {
 }
 
 const dummyChartData = [
-    { date: 'Jan', gainLoss: 50 },
-    { date: 'Feb', gainLoss: 150 },
-    { date: 'Mar', gainLoss: 250 },
-    { date: 'Apr', gainLoss: 200 },
-    { date: 'May', gainLoss: 300 },
-    { date: 'Jun', gainLoss: 450 },
-    { date: 'Jul', gainLoss: 400 },
-    { date: 'Aug', gainLoss: 550 },
-    { date: 'Sep', gainLoss: 600 },
-    { date: 'Oct', gainLoss: 500 },
-    { date: 'Nov', gainLoss: 700 },
-    { date: 'Dec', gainLoss: 850 },
+    { date: 'Jan', invested: 1000 },
+    { date: 'Feb', invested: 1500 },
+    { date: 'Mar', invested: 2500 },
+    { date: 'Apr', invested: 3000 },
+    { date: 'May', invested: 4000 },
+    { date: 'Jun', invested: 5500 },
 ];
-const dummyTotalGainLoss = 850;
-const dummyTotalGainLossPercent = 21.25;
+const dummyTotalInvested = 5500;
+const dummyDaysInvesting = 180;
 
 
 export function InvestmentChart() {
@@ -65,12 +60,12 @@ export function InvestmentChart() {
 
   const { data: investments, isLoading } = useCollection<Investment>(investmentsQuery);
 
-  const { chartData, totalGainLoss, totalGainLossPercent } = React.useMemo(() => {
+  const { chartData, totalInvested, daysInvesting } = React.useMemo(() => {
     if (!investments || investments.length === 0) {
       return { 
         chartData: dummyChartData, 
-        totalGainLoss: dummyTotalGainLoss, 
-        totalGainLossPercent: dummyTotalGainLossPercent 
+        totalInvested: dummyTotalInvested,
+        daysInvesting: dummyDaysInvesting
       };
     }
 
@@ -80,26 +75,27 @@ export function InvestmentChart() {
         return dateA - dateB;
     });
     
-    let cumulativeGainLoss = 0;
+    let cumulativeInvestment = 0;
     const data = sortedInvestments.map(inv => {
-        const gainLoss = inv.currentValue - (inv.purchasePrice * inv.quantity);
-        cumulativeGainLoss += gainLoss;
+        const cost = inv.purchasePrice * inv.quantity;
+        cumulativeInvestment += cost;
         const date = inv.purchaseDate instanceof Timestamp ? inv.purchaseDate.toDate() : new Date(inv.purchaseDate);
         return {
             date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            gainLoss: cumulativeGainLoss,
+            invested: cumulativeInvestment,
         }
     });
 
-    const finalTotalCost = investments.reduce((sum, inv) => sum + (inv.purchasePrice * inv.quantity), 0);
-    const finalTotalValue = investments.reduce((sum, inv) => sum + inv.currentValue, 0);
-    const finalGainLoss = finalTotalValue - finalTotalCost;
-    const finalGainLossPercent = finalTotalCost > 0 ? (finalGainLoss / finalTotalCost) * 100 : 0;
+    const finalTotalInvested = investments.reduce((sum, inv) => sum + (inv.purchasePrice * inv.quantity), 0);
+    const firstInvestmentDate = sortedInvestments[0].purchaseDate instanceof Timestamp 
+      ? sortedInvestments[0].purchaseDate.toDate()
+      : new Date(sortedInvestments[0].purchaseDate);
 
-    return { chartData: data, totalGainLoss: finalGainLoss, totalGainLossPercent: finalGainLossPercent };
+    const finalDaysInvesting = differenceInDays(new Date(), firstInvestmentDate);
+
+    return { chartData: data, totalInvested: finalTotalInvested, daysInvesting: finalDaysInvesting };
   }, [investments]);
 
-  const isGain = totalGainLoss >= 0;
   const hasRealData = investments && investments.length > 0;
 
   if(isLoading) {
@@ -122,10 +118,10 @@ export function InvestmentChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Investment Performance</CardTitle>
+        <CardTitle>Total Investment Growth</CardTitle>
         <CardDescription>
             {hasRealData ? 
-                `Your total portfolio gain/loss is ${totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} (${totalGainLossPercent.toFixed(2)}%).`
+                `You have invested a total of ${totalInvested.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.`
                 : "Showing dummy data. Add an investment to see your real performance."
             }
         </CardDescription>
@@ -157,25 +153,20 @@ export function InvestmentChart() {
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent 
                 formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                nameKey="gainLoss"
+                nameKey="invested"
                 labelKey="date"
             />} />
-            <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
             <defs>
-                <linearGradient id="fillGain" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-chart-2)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--color-chart-2)" stopOpacity={0.1}/>
-                </linearGradient>
-                <linearGradient id="fillLoss" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-chart-5)" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="var(--color-chart-5)" stopOpacity={0.1}/>
+                <linearGradient id="fillInvested" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-invested)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="var(--color-invested)" stopOpacity={0.1}/>
                 </linearGradient>
             </defs>
             <Area
-              dataKey="gainLoss"
+              dataKey="invested"
               type="monotone"
-              fill={isGain ? "url(#fillGain)" : "url(#fillLoss)"}
-              stroke={isGain ? "var(--color-chart-2)" : "var(--color-chart-5)"}
+              fill="url(#fillInvested)"
+              stroke="var(--color-invested)"
               stackId="a"
             />
           </AreaChart>
@@ -183,14 +174,18 @@ export function InvestmentChart() {
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
          <div className="flex gap-2 font-medium leading-none">
-          {isGain ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+          <TrendingUp className="h-4 w-4 text-green-500" />
           <div className="text-muted-foreground">
-            {hasRealData ? "Showing total portfolio gain/loss over time" : "Showing sample portfolio gain/loss"}
+            Showing total amount invested over time
           </div>
+        </div>
+        <div className="flex gap-2 font-medium leading-none text-muted-foreground">
+            <CalendarDays className="h-4 w-4" />
+            <div>
+                Investing for {daysInvesting} days
+            </div>
         </div>
       </CardFooter>
     </Card>
   )
 }
-
-    
