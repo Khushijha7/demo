@@ -16,30 +16,9 @@ const GetMarketDataInputSchema = z.object({
 export type GetMarketDataInput = z.infer<typeof GetMarketDataInputSchema>;
 
 const GetMarketDataOutputSchema = z.object({
-  price: z.number().describe('The current market price of the ticker symbol.'),
+  price: z.number().describe('The estimated current market price of the ticker symbol.'),
 });
 export type GetMarketDataOutput = z.infer<typeof GetMarketDataOutputSchema>;
-
-// This is a mock tool for demonstration purposes.
-// In a real application, this would call a financial data API.
-const getCurrentStockPrice = ai.defineTool(
-    {
-      name: 'getCurrentStockPrice',
-      description: 'Gets the current stock price for a given ticker symbol.',
-      inputSchema: z.object({ ticker: z.string() }),
-      outputSchema: z.object({ price: z.number() }),
-    },
-    async ({ ticker }) => {
-        // Simulate a price fluctuation for demonstration.
-        // This generates a random change between -15% and +15% of a base price.
-        const basePrice = Math.random() * 500 + 50; // Simulate some base price
-        const changePercent = (Math.random() - 0.5) * 0.3;
-        const price = parseFloat((basePrice * (1 + changePercent)).toFixed(2));
-        console.log(`[Tool] Faked price for ${ticker}: $${price}`);
-        return { price };
-    }
-  );
-
 
 export async function getMarketData(input: GetMarketDataInput): Promise<GetMarketDataOutput> {
   return getMarketDataFlow(input);
@@ -49,8 +28,23 @@ const prompt = ai.definePrompt({
   name: 'getMarketDataPrompt',
   input: {schema: GetMarketDataInputSchema},
   output: {schema: GetMarketDataOutputSchema},
-  tools: [getCurrentStockPrice],
-  prompt: `You are a financial data service. Use the provided tools to find the current market price for the stock with the ticker symbol: {{{tickerSymbol}}}.`,
+  prompt: `You are a financial data service. Your task is to provide an estimated, plausible current market price for a given stock ticker symbol. Use your general knowledge to provide a reasonable price.
+
+Stock Ticker Symbol: {{{tickerSymbol}}}
+
+Return ONLY the structured output with the estimated price.`,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+    ],
+  }
 });
 
 const getMarketDataFlow = ai.defineFlow(
