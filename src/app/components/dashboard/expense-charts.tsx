@@ -4,7 +4,7 @@
 import React from "react"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query } from "firebase/firestore";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ExpenseChart } from "./expense-chart";
 import { Skeleton } from "@/components/ui/skeleton";
