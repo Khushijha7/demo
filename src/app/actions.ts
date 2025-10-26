@@ -88,42 +88,41 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         };
     }
     
-    const auth = await getAuth();
-    // In a real app, you would get the user from the session/token.
-    // For this to work, you need to handle auth state properly.
-    // Assuming you have a way to get the current user's ID server-side.
-    // This part is complex and depends on your auth setup (e.g., NextAuth.js, or decoding a token).
-    // For now, this is a placeholder and will not work without a real user object from a session.
-    // FIXME: This needs a proper way to get the authenticated user on the server.
-    // For the demo, we will assume a hardcoded user if no auth is found.
-    // In a real scenario, you'd get the user from a session or by verifying a token.
-    const user = { uid: "test-user" }; // Placeholder
-
-    if (!user) {
+    // This is a placeholder for getting the authenticated user.
+    // In a real app, you would get this from the session or a verified token.
+    // For now, we'll use a hardcoded user ID.
+    const userId = "test-user"; 
+    
+    if (!userId) {
         return { message: 'Authentication required.', success: false };
     }
 
     const { description, amount, transactionType, category, accountId } = validatedFields.data;
     
-    // Adjust amount based on transaction type
     const transactionAmount = transactionType === 'deposit' ? amount : -amount;
 
     try {
         const firestore = await getFirestore();
-        const transactionsColRef = firestore.collection(`users/${user.uid}/accounts/${accountId}/transactions`);
+        const transactionsColRef = firestore.collection(`users/${userId}/transactions`);
         
         await transactionsColRef.add({
-            userId: user.uid, // Add userId for collectionGroup queries
+            userId: userId,
+            accountId,
             description,
             amount: transactionAmount,
             transactionType,
             category,
-            accountId,
             transactionDate: FieldValue.serverTimestamp(),
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
         });
         
+        // Also update the account balance
+        const accountRef = firestore.doc(`users/${userId}/accounts/${accountId}`);
+        await accountRef.update({
+            balance: FieldValue.increment(transactionAmount)
+        });
+
         return { message: 'Transaction added successfully.', success: true };
 
     } catch (e) {

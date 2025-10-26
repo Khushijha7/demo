@@ -5,7 +5,7 @@ import React from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase"
-import { collectionGroup, query, where } from "firebase/firestore"
+import { collection, query, where } from "firebase/firestore"
 
 import {
   Card,
@@ -40,8 +40,7 @@ export function ExpenseChart() {
   const transactionsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return query(
-      collectionGroup(firestore, "transactions"),
-      where("userId", "==", user.uid),
+      collection(firestore, `users/${user.uid}/transactions`),
       where("transactionType", "in", ["withdrawal", "payment"])
     );
   }, [user, firestore]);

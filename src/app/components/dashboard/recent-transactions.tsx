@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Table,
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collectionGroup, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
+import { collection, query, orderBy, limit, Timestamp } from "firebase/firestore";
 
 export function RecentTransactions() {
   const { user } = useUser();
@@ -22,8 +23,7 @@ export function RecentTransactions() {
   const transactionsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
     return query(
-      collectionGroup(firestore, "transactions"),
-      where("userId", "==", user.uid),
+      collection(firestore, `users/${user.uid}/transactions`),
       orderBy("transactionDate", "desc"),
       limit(6)
     );
