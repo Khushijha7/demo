@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Table,
@@ -13,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy } from "firebase/firestore";
+import { collection, query, orderBy, Timestamp } from "firebase/firestore";
 import { AddTransactionDialog } from "./add-transaction-dialog";
 
 export default function TransactionsPage() {
@@ -32,12 +33,21 @@ export default function TransactionsPage() {
   }, [user, firestore, accountId]);
 
   const { data: transactions, isLoading } = useCollection<{
+    id: string;
     description: string;
     amount: number;
     transactionType: string;
-    status: string;
-    transactionDate: string;
+    category: string;
+    status?: string;
+    transactionDate: string | Timestamp;
   }>(transactionsQuery);
+
+  const formatDate = (date: string | Timestamp) => {
+    if (typeof date === 'string') {
+      return new Date(date).toLocaleDateString();
+    }
+    return date.toDate().toLocaleDateString();
+  };
 
   return (
     <Card>
@@ -55,28 +65,32 @@ export default function TransactionsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Transaction</TableHead>
-              <TableHead className="text-center">Status</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-right">Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={4} className="text-center">Loading...</TableCell></TableRow>}
-            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={4} className="text-center">No transactions yet.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>}
+            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={5} className="text-center">No transactions yet.</TableCell></TableRow>}
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
                   <div className="font-medium">{transaction.description}</div>
                 </TableCell>
+                <TableCell>
+                   <Badge variant="outline">{transaction.category}</Badge>
+                </TableCell>
                 <TableCell className="text-center">
                   <Badge 
-                    variant={transaction.status === 'Completed' ? 'default' : 'secondary'}
-                    className={`${transaction.status === 'Completed' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
+                    variant={transaction.transactionType === 'deposit' ? 'default' : 'secondary'}
+                    className={`${transaction.transactionType === 'deposit' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
                     >
-                      {transaction.status || 'Completed'}
+                      {transaction.transactionType}
                     </Badge>
                 </TableCell>
-                <TableCell className="text-right">{new Date(transaction.transactionDate).toLocaleDateString()}</TableCell>
+                <TableCell className="text-right">{formatDate(transaction.transactionDate)}</TableCell>
                 <TableCell className={`text-right font-medium ${transaction.amount > 0 ? 'text-green-500' : ''}`}>
                   {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </TableCell>
