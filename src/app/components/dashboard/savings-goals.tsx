@@ -6,6 +6,7 @@ import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebas
 import { collection, query, Timestamp } from "firebase/firestore";
 import { Target } from "lucide-react";
 import { format } from "date-fns";
+import { AddFundDialog } from "@/app/dashboard/goals/add-fund-dialog";
 
 interface SavingsGoal {
     id: string;
@@ -87,8 +88,11 @@ export function SavingsGoals() {
                       </span>
                   </div>
                   <Progress value={progress} aria-label={`${goal.goalName} progress`} />
-                   <div className="text-xs text-muted-foreground mt-1">
-                        Target Date: {formatDate(goal.targetDate)}
+                   <div className="flex justify-between items-center mt-1">
+                        <div className="text-xs text-muted-foreground">
+                            Target Date: {formatDate(goal.targetDate)}
+                        </div>
+                        <AddFundDialog goal={goal} />
                     </div>
                 </div>
               );
