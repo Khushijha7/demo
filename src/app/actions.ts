@@ -6,10 +6,9 @@ import {
   type PersonalizedFinancialInsightsInput,
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
-import { getFirestore } from "@/firebase/server";
+import { getFirestore, getAuth } from "@/firebase/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
-import { getAuth } from "firebase/server";
 
 const InsightsSchema = z.object({
   spendingHabits: z.string().min(10, { message: "Please describe your spending habits in more detail." }),
