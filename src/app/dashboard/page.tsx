@@ -1,5 +1,5 @@
 import { AccountCards } from "@/app/components/dashboard/account-cards";
-import { ExpenseChart } from "@/app/components/dashboard/expense-chart";
+import { ExpenseCharts } from "@/app/components/dashboard/expense-charts";
 import { InvestmentChart } from "@/app/components/dashboard/investment-chart";
 import { PersonalizedInsights } from "@/app/components/dashboard/personalized-insights";
 import { RecentTransactions } from "@/app/components/dashboard/recent-transactions";
@@ -14,7 +14,7 @@ export default function DashboardPage() {
           <InvestmentChart />
         </div>
         <div className="lg:col-span-2 xl:col-span-1">
-          <ExpenseChart />
+          <ExpenseCharts />
         </div>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

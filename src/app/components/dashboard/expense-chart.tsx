@@ -5,8 +5,6 @@ import React from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { useAllTransactions } from "@/hooks/use-all-transactions";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query } from "firebase/firestore";
 
 import {
   Card,
@@ -36,13 +34,22 @@ const chartConfig = {
   other: { label: "Other", color: "hsl(var(--muted-foreground))" },
 }
 
-export function ExpenseChart() {
+interface ExpenseChartProps {
+  accountId?: string;
+  className?: string;
+}
+
+export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   const { transactions, isLoading } = useAllTransactions();
 
   const chartData = React.useMemo(() => {
     if (!transactions) return [];
 
-    const expenseTransactions = transactions.filter(t => t.transactionType === 'withdrawal' || t.transactionType === 'payment');
+    const filteredTransactions = accountId
+      ? transactions.filter(t => t.accountId === accountId)
+      : transactions;
+
+    const expenseTransactions = filteredTransactions.filter(t => t.transactionType === 'withdrawal' || t.transactionType === 'payment');
 
     const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
       const category = (transaction.category || 'other').toLowerCase();
@@ -59,7 +66,7 @@ export function ExpenseChart() {
       expenses,
       fill: chartConfig[category as keyof typeof chartConfig]?.color || "hsl(var(--muted-foreground))",
     }));
-  }, [transactions]);
+  }, [transactions, accountId]);
   
   const totalExpenses = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.expenses, 0)
@@ -67,97 +74,73 @@ export function ExpenseChart() {
 
   if(isLoading) {
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="items-center pb-0">
-                <div className="h-6 w-3/5 animate-pulse rounded bg-muted"></div>
-                <div className="h-4 w-2/5 animate-pulse rounded bg-muted"></div>
-            </CardHeader>
-            <CardContent className="flex-1 pb-0 flex items-center justify-center">
-                 <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-muted"></div>
-            </CardContent>
-            <CardFooter className="flex-col gap-2 text-sm">
-                <div className="h-4 w-4/5 animate-pulse rounded bg-muted"></div>
-                 <div className="h-3 w-3/5 animate-pulse rounded bg-muted"></div>
-            </CardFooter>
-        </Card>
+      <div className="flex items-center justify-center h-full min-h-[350px]">
+        <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-muted"></div>
+      </div>
     )
   }
   
    if (chartData.length === 0) {
     return (
-      <Card className="flex flex-col h-full">
-        <CardHeader className="items-center">
-          <CardTitle>Expense Breakdown</CardTitle>
-          <CardDescription>No expenses recorded yet.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground">Add a transaction to see your expense breakdown.</p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[350px]">
+          <div className="flex flex-col items-center gap-1 text-center">
+              <h3 className="text-2xl font-bold tracking-tight">No expenses recorded</h3>
+              <p className="text-sm text-muted-foreground">
+                  Add a transaction to see your expense breakdown.
+              </p>
+          </div>
+      </div>
     );
   }
 
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="items-center pb-0">
-        <CardTitle>Expense Breakdown</CardTitle>
-        <CardDescription>Your spending by category</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[300px]"
+    <ChartContainer
+      config={chartConfig}
+      className="mx-auto aspect-square max-h-[350px]"
+    >
+      <PieChart>
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideLabel />}
+        />
+        <Pie
+          data={chartData}
+          dataKey="expenses"
+          nameKey="category"
+          innerRadius={60}
+          strokeWidth={5}
         >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="expenses"
-              nameKey="category"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
-                        >
-                          {totalExpenses.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
-                        >
-                          Total Expenses
-                        </tspan>
-                      </text>
-                    )
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
-      </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="leading-none text-muted-foreground">
-          Showing total expenses across all accounts
-        </div>
-      </CardFooter>
-    </Card>
+          <Label
+            content={({ viewBox }) => {
+              if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                return (
+                  <text
+                    x={viewBox.cx}
+                    y={viewBox.cy}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    <tspan
+                      x={viewBox.cx}
+                      y={viewBox.cy}
+                      className="fill-foreground text-3xl font-bold"
+                    >
+                      {totalExpenses.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                    </tspan>
+                    <tspan
+                      x={viewBox.cx}
+                      y={(viewBox.cy || 0) + 24}
+                      className="fill-muted-foreground"
+                    >
+                      Total Expenses
+                    </tspan>
+                  </text>
+                )
+              }
+            }}
+          />
+        </Pie>
+      </PieChart>
+    </ChartContainer>
   )
 }
