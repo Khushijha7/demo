@@ -30,7 +30,7 @@ const SavingsGoalSchema = z.object({
     targetAmount: z.coerce.number().min(1, "Target amount must be greater than 0."),
     currentAmount: z.coerce.number().min(0, "Current amount cannot be negative."),
     targetDate: z.date({ required_error: "Target date is required." }),
-    accountId: z.string().optional(),
+    accountId: z.string().min(1, "Please select an account for the initial contribution.").optional(),
 }).refine(data => data.currentAmount === 0 || (data.currentAmount > 0 && data.accountId), {
     message: "An account must be selected if there is a starting amount.",
     path: ["accountId"],
@@ -69,13 +69,15 @@ export function AddGoalDialog() {
     }
 
     const formData = new FormData(event.currentTarget);
-    const validatedFields = SavingsGoalSchema.safeParse({
+    const dataToValidate = {
         goalName: formData.get('goalName'),
         targetAmount: formData.get('targetAmount'),
         currentAmount: formData.get('currentAmount'),
         targetDate: date,
-        accountId: formData.get('accountId'),
-    });
+        accountId: formData.get('accountId') || undefined,
+    };
+
+    const validatedFields = SavingsGoalSchema.safeParse(dataToValidate);
 
     if (!validatedFields.success) {
         setErrors(validatedFields.error.format());
@@ -87,7 +89,8 @@ export function AddGoalDialog() {
 
     const sourceAccount = accounts?.find(acc => acc.id === accountId);
     if (currentAmount > 0 && !sourceAccount) {
-        toast({ variant: "destructive", title: "Error", description: "Selected account not found." });
+        // This case should be caught by Zod, but as a safeguard:
+        setErrors({ _errors: [], accountId: { _errors: ["Selected account not found."] } } as any);
         setIsSubmitting(false);
         return;
     }
@@ -164,6 +167,9 @@ export function AddGoalDialog() {
       setErrors(null);
       setDate(undefined);
       setCurrentAmount(0);
+      if (formRef.current) {
+        formRef.current.reset();
+      }
     }
   }, [open])
 
@@ -186,19 +192,19 @@ export function AddGoalDialog() {
            <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="goalName" className="text-right">Goal Name</Label>
                 <Input id="goalName" name="goalName" placeholder="e.g. New Car Fund" className="col-span-3" />
-                {errors?.goalName && <p className="col-span-4 text-sm text-red-500 text-right">{errors.goalName._errors[0]}</p>}
+                {errors?.goalName?._errors[0] && <p className="col-span-4 text-sm text-red-500 text-right">{errors.goalName._errors[0]}</p>}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="targetAmount" className="text-right">Target Amount</Label>
                 <Input id="targetAmount" name="targetAmount" type="number" step="any" placeholder="e.g. 20000" className="col-span-3" />
-                {errors?.targetAmount && <p className="col-span-4 text-sm text-red-500 text-right">{errors.targetAmount._errors[0]}</p>}
+                {errors?.targetAmount?._errors[0] && <p className="col-span-4 text-sm text-red-500 text-right">{errors.targetAmount._errors[0]}</p>}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="currentAmount" className="text-right">Current Amount</Label>
+                <Label htmlFor="currentAmount" className="text-right">Starting Amount</Label>
                  <Input id="currentAmount" name="currentAmount" type="number" step="any" placeholder="e.g. 500" defaultValue="0" className="col-span-3" onChange={(e) => setCurrentAmount(parseFloat(e.target.value) || 0)}/>
-                {errors?.currentAmount && <p className="col-span-4 text-sm text-red-500 text-right">{errors.currentAmount._errors[0]}</p>}
+                {errors?.currentAmount?._errors[0] && <p className="col-span-4 text-sm text-red-500 text-right">{errors.currentAmount._errors[0]}</p>}
             </div>
 
              <div className="grid grid-cols-4 items-center gap-4">
@@ -225,7 +231,7 @@ export function AddGoalDialog() {
                         />
                     </PopoverContent>
                 </Popover>
-                 {errors?.targetDate && <p className="col-span-4 text-sm text-red-500 text-right">{errors.targetDate._errors[0]}</p>}
+                 {errors?.targetDate?._errors[0] && <p className="col-span-4 text-sm text-red-500 text-right">{errors.targetDate._errors[0]}</p>}
             </div>
             
             {currentAmount > 0 && (
@@ -245,7 +251,7 @@ export function AddGoalDialog() {
                             ))}
                         </SelectContent>
                     </Select>
-                    {errors?.accountId && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId._errors[0]}</p>}
+                    {errors?.accountId?._errors[0] && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId._errors[0]}</p>}
                 </div>
             )}
             
@@ -259,3 +265,5 @@ export function AddGoalDialog() {
     </Dialog>
   );
 }
+
+    
