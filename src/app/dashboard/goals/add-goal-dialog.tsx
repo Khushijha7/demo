@@ -55,7 +55,7 @@ export function AddGoalDialog() {
     return query(collection(firestore, `users/${user.uid}/accounts`));
   }, [user, firestore]);
 
-  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number; currency: string; accountType: string; }>(accountsQuery);
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ id: string, accountName: string; balance: number; currency: string; accountType: string; }>(accountsQuery);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -266,4 +266,3 @@ export function AddGoalDialog() {
   );
 }
 
-    
