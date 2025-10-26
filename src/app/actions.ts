@@ -50,3 +50,61 @@ export async function getPersonalizedInsights(
     };
   }
 }
+
+const TransactionSchema = z.object({
+    description: z.string().min(1, "Description is required."),
+    amount: z.coerce.number().min(0.01, "Amount must be greater than 0."),
+    transactionType: z.enum(["deposit", "withdrawal", "payment"]),
+    category: z.string().min(1, "Category is required."),
+    accountId: z.string().min(1, "Please select an account.")
+});
+
+export async function addTransaction(prevState: any, formData: FormData) {
+    const validatedFields = TransactionSchema.safeParse({
+        description: formData.get('description'),
+        amount: formData.get('amount'),
+        transactionType: formData.get('transactionType'),
+        category: formData.get('category'),
+        accountId: formData.get('accountId'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            success: false,
+            errors: validatedFields.error.flatten().fieldErrors,
+        };
+    }
+
+    const { description, amount, transactionType, category, accountId } = validatedFields.data;
+    const userId = "test-user"; // FIXME: This should come from an auth session
+
+    try {
+        const db = await getFirestore();
+        const batch = db.batch();
+
+        const transactionRef = db.collection(`users/${userId}/transactions`).doc();
+        const transactionAmount = transactionType === 'deposit' ? amount : -amount;
+
+        batch.set(transactionRef, {
+            id: transactionRef.id,
+            accountId,
+            description,
+            amount: transactionAmount,
+            transactionType,
+            category,
+            transactionDate: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+        });
+
+        const accountRef = db.doc(`users/${userId}/accounts/${accountId}`);
+        batch.update(accountRef, { balance: FieldValue.increment(transactionAmount) });
+
+        await batch.commit();
+        return { success: true };
+    } catch (e) {
+        console.error("Error adding transaction:", e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { success: false, error: `Failed to add transaction. ${errorMessage}` };
+    }
+}
