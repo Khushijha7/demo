@@ -5,9 +5,8 @@ import {
   type PersonalizedFinancialInsightsInput,
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { getAuth, getFirestore } from "@/firebase/server";
-import { collection } from "firebase/firestore";
+import { collection } from "firebase-admin/firestore";
 import { z } from "zod";
 
 const InsightsSchema = z.object({
@@ -90,6 +89,7 @@ export async function addTransaction(prevState: TransactionState, formData: Form
     
     const auth = await getAuth();
     const firestore = await getFirestore();
+    
     // This is a temporary workaround to get the user.
     // In a real app, you would get the user from the session.
     const user = { uid: "test-user" }; // FIXME
@@ -105,7 +105,7 @@ export async function addTransaction(prevState: TransactionState, formData: Form
     try {
         const transactionsColRef = collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`);
         
-        await addDocumentNonBlocking(transactionsColRef, {
+        await transactionsColRef.add({
             description,
             amount: transactionAmount,
             transactionType,
