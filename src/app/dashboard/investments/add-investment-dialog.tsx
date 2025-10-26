@@ -31,7 +31,7 @@ const InvestmentSchema = z.object({
     investmentType: z.enum(["stock", "etf", "crypto", "other"], {
       errorMap: () => ({ message: "Please select an investment type." })
     }),
-    quantity: z.coerce.number().min(0, "Quantity cannot be negative."),
+    quantity: z.coerce.number().min(0.000001, "Quantity must be positive."),
     purchasePrice: z.coerce.number().min(0.01, "Purchase price must be positive."),
     purchaseDate: z.date({ required_error: "Purchase date is required." }),
     accountId: z.string().min(1, "Please select an account.")
@@ -128,7 +128,7 @@ export function AddInvestmentDialog() {
             id: transactionRef.id,
             userId: user.uid,
             accountId: accountId,
-            description: `Purchase of ${investmentName}`,
+            description: `Purchase of ${quantity} ${tickerSymbol}`,
             amount: -investmentCost,
             transactionType: 'withdrawal',
             category: 'investment',
@@ -183,7 +183,7 @@ export function AddInvestmentDialog() {
         <DialogHeader>
           <DialogTitle>Add New Investment</DialogTitle>
           <DialogDescription>
-            Enter the details of your new investment.
+            Enter the details of your new investment. The cost will be deducted from a selected account.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} ref={formRef} className="grid gap-4 py-4">
@@ -283,3 +283,5 @@ export function AddInvestmentDialog() {
     </Dialog>
   );
 }
+
+    
