@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useFormStatus } from "react-dom";
 import { addTransaction } from "@/app/actions";
 
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ function SubmitButton() {
 
 
 export function AddTransactionDialog() {
-  const [state, formAction] = useFormState(addTransaction, initialState);
+  const [state, formAction] = useActionState(addTransaction, initialState);
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
