@@ -234,6 +234,10 @@
           "type": "string",
           "description": "Name of the investment (e.g., 'Apple Stock', 'Bitcoin')."
         },
+        "tickerSymbol": {
+          "type": "string",
+          "description": "The stock ticker symbol (e.g., AAPL, BTC)."
+        },
         "investmentType": {
           "type": "string",
           "description": "Type of investment (e.g., 'stock', 'etf', 'crypto', 'other')."
@@ -270,6 +274,7 @@
         "id",
         "userId",
         "investmentName",
+        "tickerSymbol",
         "investmentType",
         "quantity",
         "purchasePrice",

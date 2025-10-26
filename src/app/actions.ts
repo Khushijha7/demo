@@ -6,6 +6,11 @@ import {
   type PersonalizedFinancialInsightsInput,
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
+import { 
+  getMarketData, 
+  type GetMarketDataInput, 
+  type GetMarketDataOutput 
+} from "@/ai/flows/get-market-data";
 import { z } from "zod";
 
 const InsightsSchema = z.object({
@@ -45,6 +50,43 @@ export async function getPersonalizedInsights(
       data: null,
       success: false,
       error: "Failed to generate insights. Please try again.",
+    };
+  }
+}
+
+const MarketDataSchema = z.object({
+  tickerSymbol: z.string(),
+  purchasePrice: z.coerce.number(),
+});
+
+type MarketDataState = {
+  data: GetMarketDataOutput | null;
+  error: string | null;
+  success: boolean;
+};
+
+export async function getRealTimePrice(
+  input: GetMarketDataInput
+): Promise<MarketDataState> {
+  const validatedFields = MarketDataSchema.safeParse(input);
+
+  if (!validatedFields.success) {
+    return {
+      data: null,
+      success: false,
+      error: "Invalid input for market data.",
+    };
+  }
+
+  try {
+    const result = await getMarketData(validatedFields.data);
+    return { data: result, success: true, error: null };
+  } catch (e) {
+    console.error(e);
+    return {
+      data: null,
+      success: false,
+      error: "Failed to fetch real-time price. Please try again.",
     };
   }
 }

@@ -1,5 +1,6 @@
 
 'use client';
+import React, { useState } from 'react';
 import {
   Table,
   TableBody,
@@ -11,11 +12,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, Timestamp } from "firebase/firestore";
+import { collection, query, Timestamp, doc, updateDoc } from "firebase/firestore";
+import { getRealTimePrice } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Investment {
     id: string;
     investmentName: string;
+    tickerSymbol: string;
     investmentType: string;
     quantity: number;
     purchasePrice: number;
@@ -26,6 +32,9 @@ interface Investment {
 export function InvestmentsTable() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
   const investmentsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
@@ -33,6 +42,45 @@ export function InvestmentsTable() {
   }, [user, firestore]);
 
   const { data: investments, isLoading } = useCollection<Investment>(investmentsQuery);
+
+  const handleRefreshPrices = async (investment?: Investment) => {
+    if (!firestore || !user) return;
+    
+    const investmentsToRefresh = investment ? [investment] : investments;
+    if (!investmentsToRefresh) return;
+    
+    setIsRefreshing(true);
+    if(investment) setRefreshingId(investment.id);
+
+    const refreshPromises = investmentsToRefresh.map(async (inv) => {
+      try {
+        const result = await getRealTimePrice({ tickerSymbol: inv.tickerSymbol, purchasePrice: inv.purchasePrice });
+        if (result.success && result.data) {
+          const newCurrentValue = result.data.price * inv.quantity;
+          const investmentRef = doc(firestore, `users/${user.uid}/investments`, inv.id);
+          await updateDoc(investmentRef, { currentValue: newCurrentValue, updatedAt: new Date() });
+        } else {
+          throw new Error(result.error || "Failed to get price from AI.");
+        }
+      } catch (error) {
+        console.error(`Failed to refresh price for ${inv.investmentName}:`, error);
+        toast({
+            variant: "destructive",
+            title: `Error refreshing ${inv.investmentName}`,
+            description: error instanceof Error ? error.message : "An unknown error occurred."
+        })
+      }
+    });
+
+    await Promise.all(refreshPromises);
+
+    setIsRefreshing(false);
+    setRefreshingId(null);
+    toast({
+        title: "Success",
+        description: `Refreshed price for ${investment ? investment.investmentName : "all investments"}.`
+    })
+  };
 
   const formatDate = (date: string | Timestamp) => {
     if (!date) return 'N/A';
@@ -55,41 +103,59 @@ export function InvestmentsTable() {
                 A detailed view of your current investments.
             </CardDescription>
         </div>
+        <Button size="sm" className="ml-auto gap-1" onClick={() => handleRefreshPrices()} disabled={isRefreshing || isLoading}>
+            {isRefreshing && !refreshingId ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4" />}
+            Refresh All
+        </Button>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Investment</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="text-right">Purchase Price</TableHead>
-              <TableHead className="text-right">Purchase Date</TableHead>
-              <TableHead className="text-right">Current Value</TableHead>
+              <TableHead>Total Cost</TableHead>
+              <TableHead>Current Value</TableHead>
+              <TableHead className="text-right">Gain/Loss</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading investments...</TableCell></TableRow>}
-            {!isLoading && investments?.length === 0 && <TableRow><TableCell colSpan={6} className="h-24 text-center">No investments yet.</TableCell></TableRow>}
-            {investments?.map((investment) => (
+            {isLoading && <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading investments...</TableCell></TableRow>}
+            {!isLoading && investments?.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">No investments yet.</TableCell></TableRow>}
+            {investments?.map((investment) => {
+              const cost = investment.purchasePrice * investment.quantity;
+              const gainLoss = investment.currentValue - cost;
+              const gainLossPercent = cost > 0 ? (gainLoss / cost) * 100 : 0;
+              const isGain = gainLoss >= 0;
+
+              return (
               <TableRow key={investment.id}>
-                <TableCell className="font-medium">{investment.investmentName}</TableCell>
-                <TableCell><Badge variant="outline">{investment.investmentType}</Badge></TableCell>
-                <TableCell className="text-right">{investment.quantity}</TableCell>
-                <TableCell className="text-right">{investment.purchasePrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                <TableCell className="text-right">{formatDate(investment.purchaseDate)}</TableCell>
-                <TableCell className="text-right font-medium">{investment.currentValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                <TableCell>
+                    <div className="font-medium">{investment.investmentName} ({investment.tickerSymbol})</div>
+                    <div className="text-sm text-muted-foreground">{investment.quantity} shares @ {cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+                </TableCell>
+                <TableCell>{cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                <TableCell>{investment.currentValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                <TableCell className={`text-right font-medium ${isGain ? 'text-green-500' : 'text-red-500'}`}>
+                    <div>{gainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+                    <div className="text-xs">({gainLossPercent.toFixed(2)}%)</div>
+                </TableCell>
+                <TableCell className="text-right">
+                   <Button variant="ghost" size="icon" onClick={() => handleRefreshPrices(investment)} disabled={isRefreshing}>
+                     {isRefreshing && refreshingId === investment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4" />}
+                   </Button>
+                </TableCell>
               </TableRow>
-            ))}
+            )})}
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={5} className="text-right">Total Portfolio Value</TableCell>
+                    <TableCell colSpan={4} className="text-right">Total Portfolio Value</TableCell>
                     <TableCell className="text-right">{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 </TableRow>
              )}
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold">
-                    <TableCell colSpan={5} className="text-right">Total Gain/Loss</TableCell>
+                    <TableCell colSpan={4} className="text-right">Total Gain/Loss</TableCell>
                     <TableCell className={`text-right ${totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                         {totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} ({totalGainLossPercent.toFixed(2)}%)
                     </TableCell>

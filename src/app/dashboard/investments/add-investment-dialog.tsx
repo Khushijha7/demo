@@ -27,6 +27,7 @@ import { format } from "date-fns";
 
 const InvestmentSchema = z.object({
     investmentName: z.string().min(1, "Investment name is required."),
+    tickerSymbol: z.string().min(1, "Ticker symbol is required.").toUpperCase(),
     investmentType: z.enum(["stock", "etf", "crypto", "other"], {
       errorMap: () => ({ message: "Please select an investment type." })
     }),
@@ -62,6 +63,7 @@ export function AddInvestmentDialog() {
     const formData = new FormData(event.currentTarget);
     const validatedFields = InvestmentSchema.safeParse({
         investmentName: formData.get('investmentName'),
+        tickerSymbol: formData.get('tickerSymbol'),
         investmentType: formData.get('investmentType'),
         quantity: formData.get('quantity'),
         purchasePrice: formData.get('purchasePrice'),
@@ -74,13 +76,14 @@ export function AddInvestmentDialog() {
         return;
     }
 
-    const { investmentName, investmentType, quantity, purchasePrice, purchaseDate } = validatedFields.data;
+    const { investmentName, tickerSymbol, investmentType, quantity, purchasePrice, purchaseDate } = validatedFields.data;
 
     try {
         const investmentsCollection = collection(firestore, `users/${user.uid}/investments`);
         const investmentData = {
             userId: user.uid,
             investmentName,
+            tickerSymbol,
             investmentType,
             quantity,
             purchasePrice,
@@ -132,8 +135,14 @@ export function AddInvestmentDialog() {
         <form onSubmit={handleSubmit} ref={formRef} className="grid gap-4 py-4">
            <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="investmentName" className="text-right">Name</Label>
-                <Input id="investmentName" name="investmentName" className="col-span-3" />
+                <Input id="investmentName" name="investmentName" placeholder="e.g. Apple Stock" className="col-span-3" />
                 {errors?.investmentName && <p className="col-span-4 text-sm text-red-500 text-right">{errors.investmentName._errors[0]}</p>}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="tickerSymbol" className="text-right">Ticker</Label>
+                <Input id="tickerSymbol" name="tickerSymbol" placeholder="e.g. AAPL" className="col-span-3" />
+                {errors?.tickerSymbol && <p className="col-span-4 text-sm text-red-500 text-right">{errors.tickerSymbol._errors[0]}</p>}
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
