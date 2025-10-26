@@ -1,9 +1,19 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query } from "firebase/firestore";
+import { collection, query, Timestamp } from "firebase/firestore";
 import { Target } from "lucide-react";
+import { format } from "date-fns";
+
+interface SavingsGoal {
+    id: string;
+    goalName: string;
+    currentAmount: number;
+    targetAmount: number;
+    targetDate: Timestamp | string;
+}
 
 export function SavingsGoals() {
   const { user } = useUser();
@@ -14,11 +24,13 @@ export function SavingsGoals() {
     return query(collection(firestore, `users/${user.uid}/savingsGoals`));
   }, [user, firestore]);
 
-  const { data: goals, isLoading } = useCollection<{
-    goalName: string;
-    currentAmount: number;
-    targetAmount: number;
-  }>(goalsQuery);
+  const { data: goals, isLoading } = useCollection<SavingsGoal>(goalsQuery);
+
+  const formatDate = (date: string | Timestamp) => {
+    if (!date) return 'N/A';
+    const d = typeof date === 'string' ? new Date(date) : date.toDate();
+    return format(d, "PPP");
+  };
 
   if (isLoading) {
     return (
@@ -38,6 +50,7 @@ export function SavingsGoals() {
                 <div className="h-3 w-1/4 animate-pulse rounded bg-muted"></div>
               </div>
               <div className="h-4 w-full animate-pulse rounded-full bg-muted"></div>
+              <div className="h-3 w-1/3 animate-pulse rounded bg-muted mt-1"></div>
             </div>
           ))}
         </CardContent>
@@ -57,7 +70,11 @@ export function SavingsGoals() {
       <CardContent>
         <div className="grid gap-6">
           {!goals || goals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">You haven't set any savings goals yet.</p>
+            <div className="text-center text-muted-foreground py-8">
+                <Target className="mx-auto h-12 w-12" />
+                <h3 className="mt-4 text-lg font-semibold">No Savings Goals Yet</h3>
+                <p className="mt-2 text-sm">Click "Add Goal" to start tracking your savings.</p>
+            </div>
           ) : (
             goals.map((goal) => {
               const progress = (goal.currentAmount / goal.targetAmount) * 100;
@@ -70,6 +87,9 @@ export function SavingsGoals() {
                       </span>
                   </div>
                   <Progress value={progress} aria-label={`${goal.goalName} progress`} />
+                   <div className="text-xs text-muted-foreground mt-1">
+                        Target Date: {formatDate(goal.targetDate)}
+                    </div>
                 </div>
               );
             })
