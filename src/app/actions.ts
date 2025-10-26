@@ -7,7 +7,6 @@ import {
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
 import { getAuth, getFirestore } from "@/firebase/server";
-import { collection } from "firebase-admin/firestore";
 import { z } from "zod";
 
 const InsightsSchema = z.object({
@@ -71,7 +70,7 @@ type TransactionState = {
     success: boolean;
 };
 
-export async function addTransaction(prevState: TransactionState, formData: FormData) {
+export async function addTransaction(prevState: TransactionState, formData: FormData): Promise<TransactionState> {
     const validatedFields = TransactionSchema.safeParse({
         description: formData.get('description'),
         amount: formData.get('amount'),
@@ -88,11 +87,8 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         };
     }
     
-    const auth = await getAuth();
-    const firestore = await getFirestore();
-    
-    // This is a temporary workaround to get the user.
     // In a real app, you would get the user from the session.
+    // For now, we are using a hardcoded user ID.
     const user = { uid: "test-user" }; // FIXME
 
     if (!user) {
@@ -101,10 +97,12 @@ export async function addTransaction(prevState: TransactionState, formData: Form
 
     const { description, amount, transactionType, category, accountId } = validatedFields.data;
     
+    // Adjust amount based on transaction type
     const transactionAmount = transactionType === 'deposit' ? amount : -amount;
 
     try {
-        const transactionsColRef = collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`);
+        const firestore = await getFirestore();
+        const transactionsColRef = firestore.collection(`users/${user.uid}/accounts/${accountId}/transactions`);
         
         await transactionsColRef.add({
             description,
@@ -120,7 +118,7 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         return { message: 'Transaction added successfully.', success: true };
 
     } catch (e) {
-        console.error(e);
+        console.error("Error adding transaction to Firestore:", e);
         return { message: 'Failed to add transaction.', success: false };
     }
 }
