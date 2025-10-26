@@ -1,9 +1,12 @@
 
 'use client';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Wallet, CreditCard, Landmark, PiggyBank } from "lucide-react";
+import { Wallet, CreditCard, Landmark, PiggyBank, MoreVertical } from "lucide-react";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query } from "firebase/firestore";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AddMoneyDialog } from "@/app/dashboard/accounts/add-money-dialog";
 
 const iconMap: { [key: string]: React.ElementType } = {
   checking: Wallet,
@@ -23,6 +26,7 @@ export function AccountCards() {
   }, [user, firestore]);
 
   const { data: accounts, isLoading } = useCollection<{
+    id: string;
     accountName: string;
     balance: number;
     accountType: string;
@@ -65,10 +69,24 @@ export function AccountCards() {
       {accounts.map((account) => {
         const Icon = iconMap[account.accountType] || iconMap.default;
         return (
-          <Card key={account.id}>
+          <Card key={account.id} className="group">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{account.accountName}</CardTitle>
-              <Icon className="h-4 w-4 text-muted-foreground" />
+               <div className="flex items-center gap-2">
+                <Icon className="h-4 w-4 text-muted-foreground" />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="h-4 w-4"/>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <AddMoneyDialog account={account}>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Add Money</DropdownMenuItem>
+                        </AddMoneyDialog>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+               </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
