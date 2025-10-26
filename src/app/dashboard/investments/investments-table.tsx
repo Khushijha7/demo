@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query, Timestamp, doc, updateDoc } from "firebase/firestore";
@@ -18,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { InvestmentActions } from './investment-actions';
+import { useAllTransactions } from '@/hooks/use-all-transactions';
 
 interface Investment {
     id: string;
@@ -29,8 +29,12 @@ interface Investment {
     purchasePrice: number;
     currentValue: number;
     purchaseDate: Timestamp | string;
-    // This is not in the schema, but useful for mapping
     associatedTransactionId?: string;
+}
+
+interface Account {
+    id: string;
+    accountName: string;
 }
 
 export function InvestmentsTable() {
@@ -45,7 +49,14 @@ export function InvestmentsTable() {
     return query(collection(firestore, `users/${user.uid}/investments`));
   }, [user, firestore]);
 
-  const { data: investments, isLoading } = useCollection<Investment>(investmentsQuery);
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/accounts`));
+  }, [user, firestore]);
+
+  const { data: investments, isLoading: isLoadingInvestments } = useCollection<Investment>(investmentsQuery);
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<Account>(accountsQuery);
+  const { transactions, isLoading: isLoadingTransactions } = useAllTransactions();
 
   const handleRefreshPrices = async (investment?: Investment) => {
     if (!firestore || !user) return;
@@ -92,12 +103,26 @@ export function InvestmentsTable() {
         })
     }
   };
+  
+  const isLoading = isLoadingInvestments || isLoadingAccounts || isLoadingTransactions;
+
+  const investmentsWithAccount = useMemo(() => {
+    if (!investments || !transactions || !accounts) return [];
+    
+    const transactionMap = new Map(transactions.map(t => [t.id, t]));
+    const accountMap = new Map(accounts.map(a => [a.id, a]));
+
+    return investments.map(investment => {
+      const transaction = transactionMap.get(investment.associatedTransactionId || '');
+      const account = transaction ? accountMap.get(transaction.accountId) : undefined;
+      return {
+        ...investment,
+        sourceAccountName: account ? account.accountName : 'N/A',
+      };
+    });
+  }, [investments, transactions, accounts]);
 
   const totalValue = investments?.reduce((sum, inv) => sum + inv.currentValue, 0) || 0;
-  const totalCost = investments?.reduce((sum, inv) => sum + (inv.purchasePrice * inv.quantity), 0) || 0;
-  const totalGainLoss = totalValue - totalCost;
-  const totalGainLossPercent = totalCost > 0 ? (totalGainLoss / totalCost) * 100 : 0;
-
 
   return (
     <Card>
@@ -120,18 +145,15 @@ export function InvestmentsTable() {
               <TableHead>Investment</TableHead>
               <TableHead>Total Cost</TableHead>
               <TableHead>Current Value</TableHead>
-              <TableHead className="text-right">Gain/Loss</TableHead>
+              <TableHead>Source Account</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading investments...</TableCell></TableRow>}
-            {!isLoading && investments?.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">No investments yet.</TableCell></TableRow>}
-            {investments?.map((investment) => {
+            {!isLoading && investmentsWithAccount.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">No investments yet.</TableCell></TableRow>}
+            {investmentsWithAccount?.map((investment) => {
               const cost = investment.purchasePrice * investment.quantity;
-              const gainLoss = investment.currentValue - cost;
-              const gainLossPercent = cost > 0 ? (gainLoss / cost) * 100 : 0;
-              const isGain = gainLoss >= 0;
 
               return (
               <TableRow key={investment.id}>
@@ -141,10 +163,7 @@ export function InvestmentsTable() {
                 </TableCell>
                 <TableCell>{cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 <TableCell>{investment.currentValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                <TableCell className={`text-right font-medium ${isGain ? 'text-green-500' : 'text-red-500'}`}>
-                    <div>{gainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
-                    <div className="text-xs">({gainLossPercent.toFixed(2)}%)</div>
-                </TableCell>
+                <TableCell>{investment.sourceAccountName}</TableCell>
                 <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
                         <Button variant="ghost" size="icon" onClick={() => handleRefreshPrices(investment)} disabled={isRefreshing}>
@@ -158,15 +177,7 @@ export function InvestmentsTable() {
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold bg-muted/50">
                     <TableCell colSpan={3} className="text-right">Total Portfolio Value</TableCell>
-                    <TableCell className="text-right" colSpan={2}>{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                </TableRow>
-             )}
-             {!isLoading && investments && investments.length > 0 && (
-                <TableRow className="font-bold">
-                    <TableCell colSpan={3} className="text-right">Total Gain/Loss</TableCell>
-                    <TableCell className={`text-right ${totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'}`} colSpan={2}>
-                        {totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} ({totalGainLossPercent.toFixed(2)}%)
-                    </TableCell>
+                    <TableCell colSpan={2}>{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 </TableRow>
              )}
           </TableBody>
