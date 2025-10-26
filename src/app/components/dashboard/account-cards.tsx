@@ -36,7 +36,7 @@ export function AccountCards() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       {accountData.map((account) => (
-        <Card key={account.id}>
+        <Card key={account.id} style={{backgroundColor: '#9196cc'}}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{account.title}</CardTitle>
             <account.icon className="h-4 w-4 text-muted-foreground" />

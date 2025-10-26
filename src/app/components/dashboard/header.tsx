@@ -41,6 +41,7 @@ import { ThemeToggle } from '../theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
 
@@ -80,16 +81,10 @@ export function AppHeader() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
-              {userAvatar && (
-                <Image
-                  src={userAvatar.imageUrl}
-                  width={36}
-                  height={36}
-                  alt="Avatar"
-                  className="rounded-full"
-                  data-ai-hint={userAvatar.imageHint}
-                />
-              )}
+              <Avatar className="h-8 w-8">
+                {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
+                <AvatarFallback>JD</AvatarFallback>
+              </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>
           </DropdownMenuTrigger>
