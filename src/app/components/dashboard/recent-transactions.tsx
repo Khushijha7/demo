@@ -13,29 +13,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, limit, Timestamp } from "firebase/firestore";
+import { useAllTransactions } from "@/hooks/use-all-transactions";
+import { Timestamp } from "firebase/firestore";
 
 export function RecentTransactions() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const transactionsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/transactions`),
-      orderBy("transactionDate", "desc"),
-      limit(6)
-    );
-  }, [user, firestore]);
-
-  const { data: transactions, isLoading } = useCollection<{
-    id: string;
-    description: string;
-    amount: number;
-    status?: string; // Status is not in our schema, but keeping for UI compatibility
-    transactionDate: string | Timestamp;
-  }>(transactionsQuery);
+  const { transactions, isLoading } = useAllTransactions({
+    limit: 6,
+    orderBy: "transactionDate",
+    orderDirection: "desc",
+  });
 
   const formatDate = (date: string | Timestamp) => {
     if (!date) return 'N/A';
@@ -89,10 +75,10 @@ export function RecentTransactions() {
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge 
-                    variant={transaction.status === 'Completed' || !transaction.status ? 'default' : 'secondary'}
-                    className={`${transaction.status === 'Completed' || !transaction.status ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
+                    variant={'default'}
+                    className={'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}
                     >
-                      {transaction.status || 'Completed'}
+                      Completed
                     </Badge>
                 </TableCell>
                 <TableCell className="text-right">{formatDate(transaction.transactionDate)}</TableCell>

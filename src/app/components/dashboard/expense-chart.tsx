@@ -4,8 +4,7 @@
 import React from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase"
-import { collection, query, where } from "firebase/firestore"
+import { useAllTransactions } from "@/hooks/use-all-transactions";
 
 import {
   Card,
@@ -34,26 +33,14 @@ const chartConfig = {
 }
 
 export function ExpenseChart() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const transactionsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(
-      collection(firestore, `users/${user.uid}/transactions`),
-      where("transactionType", "in", ["withdrawal", "payment"])
-    );
-  }, [user, firestore]);
-
-  const { data: transactions, isLoading } = useCollection<{
-    category: string;
-    amount: number;
-  }>(transactionsQuery);
+  const { transactions, isLoading } = useAllTransactions();
 
   const chartData = React.useMemo(() => {
     if (!transactions) return [];
 
-    const expenseByCategory = transactions.reduce((acc, transaction) => {
+    const expenseTransactions = transactions.filter(t => t.transactionType === 'withdrawal' || t.transactionType === 'payment');
+
+    const expenseByCategory = expenseTransactions.reduce((acc, transaction) => {
       const category = transaction.category.toLowerCase();
       const amount = Math.abs(transaction.amount);
       if (!acc[category]) {

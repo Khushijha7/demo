@@ -11,26 +11,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AddTransactionDialog } from "./add-transaction-dialog";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, Timestamp } from "firebase/firestore";
+import { useAllTransactions } from "@/hooks/use-all-transactions";
+import { Timestamp } from "firebase/firestore";
 
 export default function TransactionsPage() {
-  const { user } = useUser();
-  const firestore = useFirestore();
-
-  const transactionsQuery = useMemoFirebase(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, `users/${user.uid}/transactions`), orderBy("transactionDate", "desc"));
-  }, [user, firestore]);
-
-  const { data: transactions, isLoading } = useCollection<{
-    id: string;
-    description: string;
-    amount: number;
-    transactionType: string;
-    category: string;
-    transactionDate: string | Timestamp;
-  }>(transactionsQuery);
+  const { transactions, isLoading } = useAllTransactions({
+    orderBy: "transactionDate",
+    orderDirection: "desc",
+  });
 
   const formatDate = (date: string | Timestamp) => {
      if (!date) return 'N/A';
