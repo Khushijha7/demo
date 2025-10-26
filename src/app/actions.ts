@@ -56,7 +56,6 @@ export async function getPersonalizedInsights(
 
 const MarketDataSchema = z.object({
   tickerSymbol: z.string(),
-  purchasePrice: z.coerce.number(),
 });
 
 type MarketDataState = {

@@ -12,7 +12,6 @@ import {z} from 'genkit';
 
 const GetMarketDataInputSchema = z.object({
   tickerSymbol: z.string().describe('The stock ticker symbol, e.g., "GOOGL".'),
-  purchasePrice: z.number().describe('The original purchase price of the asset.'),
 });
 export type GetMarketDataInput = z.infer<typeof GetMarketDataInputSchema>;
 
@@ -64,7 +63,7 @@ const getMarketDataFlow = ai.defineFlow(
     const {output} = await prompt(input);
     if (!output) {
       // If the model fails to return a structured output, fallback to a simulated price
-      const simulatedPrice = parseFloat((input.purchasePrice * (1 + (Math.random() - 0.5) * 0.2)).toFixed(2));
+      const simulatedPrice = parseFloat(((Math.random() * 500 + 50) * (1 + (Math.random() - 0.5) * 0.2)).toFixed(2));
       return { price: simulatedPrice };
     }
     return output;

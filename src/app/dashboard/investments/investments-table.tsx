@@ -54,7 +54,7 @@ export function InvestmentsTable() {
 
     const refreshPromises = investmentsToRefresh.map(async (inv) => {
       try {
-        const result = await getRealTimePrice({ tickerSymbol: inv.tickerSymbol, purchasePrice: inv.purchasePrice });
+        const result = await getRealTimePrice({ tickerSymbol: inv.tickerSymbol });
         if (result.success && result.data) {
           const newCurrentValue = result.data.price * inv.quantity;
           const investmentRef = doc(firestore, `users/${user.uid}/investments`, inv.id);
