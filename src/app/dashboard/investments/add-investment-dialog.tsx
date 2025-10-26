@@ -55,7 +55,7 @@ export function AddInvestmentDialog() {
     return query(collection(firestore, `users/${user.uid}/accounts`));
   }, [user, firestore]);
 
-  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number; currency: string }>(accountsQuery);
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number; currency: string; accountType: string; }>(accountsQuery);
 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -96,8 +96,8 @@ export function AddInvestmentDialog() {
     }
 
     const investmentCost = quantity * purchasePrice;
-
-    if (sourceAccount.balance < investmentCost) {
+    
+    if (sourceAccount.accountType !== 'credit_card' && sourceAccount.balance < investmentCost) {
         toast({ variant: "destructive", title: "Insufficient Funds", description: `Your ${sourceAccount.accountName} does not have enough funds.` });
         setIsSubmitting(false);
         return;
@@ -139,8 +139,12 @@ export function AddInvestmentDialog() {
 
         // 3. Update Account Balance
         const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+        const newBalance = sourceAccount.accountType === 'credit_card'
+            ? sourceAccount.balance + investmentCost
+            : sourceAccount.balance - investmentCost;
+
         batch.update(accountRef, {
-            balance: sourceAccount.balance - investmentCost,
+            balance: newBalance,
             updatedAt: serverTimestamp(),
         });
         

@@ -76,10 +76,17 @@ export function InvestmentsTable() {
 
     setIsRefreshing(false);
     setRefreshingId(null);
-    toast({
-        title: "Success",
-        description: `Refreshed price for ${investment ? investment.investmentName : "all investments"}.`
-    })
+    if (investment) {
+        toast({
+            title: "Success",
+            description: `Refreshed price for ${investment.investmentName}.`
+        })
+    } else {
+        toast({
+            title: "Success",
+            description: `Refreshed prices for all investments.`
+        })
+    }
   };
 
   const formatDate = (date: string | Timestamp) => {
@@ -132,7 +139,7 @@ export function InvestmentsTable() {
               <TableRow key={investment.id}>
                 <TableCell>
                     <div className="font-medium">{investment.investmentName} ({investment.tickerSymbol})</div>
-                    <div className="text-sm text-muted-foreground">{investment.quantity} shares @ {cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+                    <div className="text-sm text-muted-foreground">{investment.quantity} shares @ {investment.purchasePrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
                 </TableCell>
                 <TableCell>{cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 <TableCell>{investment.currentValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
@@ -149,14 +156,14 @@ export function InvestmentsTable() {
             )})}
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold bg-muted/50">
-                    <TableCell colSpan={4} className="text-right">Total Portfolio Value</TableCell>
-                    <TableCell className="text-right">{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                    <TableCell colSpan={3} className="text-right">Total Portfolio Value</TableCell>
+                    <TableCell className="text-right" colSpan={2}>{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 </TableRow>
              )}
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold">
-                    <TableCell colSpan={4} className="text-right">Total Gain/Loss</TableCell>
-                    <TableCell className={`text-right ${totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    <TableCell colSpan={3} className="text-right">Total Gain/Loss</TableCell>
+                    <TableCell className={`text-right ${totalGainLoss >= 0 ? 'text-green-500' : 'text-red-500'}`} colSpan={2}>
                         {totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} ({totalGainLossPercent.toFixed(2)}%)
                     </TableCell>
                 </TableRow>
