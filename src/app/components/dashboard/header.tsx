@@ -40,12 +40,11 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ThemeToggle } from '../theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import Image from 'next/image';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+import { useAuth } from '@/firebase';
 
 export function AppHeader() {
+  const auth = useAuth();
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       <SidebarTrigger className="md:hidden"/>
@@ -82,7 +81,6 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
                 <AvatarFallback>JD</AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
@@ -94,7 +92,7 @@ export function AppHeader() {
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => auth.signOut()}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

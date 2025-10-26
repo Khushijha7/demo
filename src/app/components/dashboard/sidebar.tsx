@@ -22,13 +22,13 @@ import {
   LogOut,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
-
-const userAvatar = PlaceHolderImages.find((img) => img.id === 'user-avatar');
+import { useAuth, useUser } from '@/firebase';
 
 export function AppSidebar() {
   const pathname = usePathname();
   const isActive = (path: string) => pathname === path;
+  const { user } = useUser();
+  const auth = useAuth();
 
   return (
     <Sidebar
@@ -148,14 +148,12 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 p-2 rounded-md group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
               <Avatar className="h-9 w-9">
-                {userAvatar && <AvatarImage src={userAvatar.imageUrl} alt="User Avatar" />}
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <span className="text-sm font-semibold">Jane Doe</span>
-                <span className="text-xs text-muted-foreground">jane.doe@email.com</span>
+                <span className="text-sm font-semibold">{user?.email}</span>
               </div>
-               <button className="ml-auto group-data-[collapsible=icon]:hidden"><LogOut className="w-4 h-4 text-muted-foreground hover:text-foreground"/></button>
+               <button onClick={() => auth.signOut()} className="ml-auto group-data-[collapsible=icon]:hidden"><LogOut className="w-4 h-4 text-muted-foreground hover:text-foreground"/></button>
             </div>
           </SidebarMenuItem>
         </SidebarMenu>

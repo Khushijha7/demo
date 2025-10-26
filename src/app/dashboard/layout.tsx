@@ -1,13 +1,26 @@
+'use client';
 import React from 'react';
-import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/app/components/dashboard/sidebar';
 import { AppHeader } from '@/app/components/dashboard/header';
+import { useUser } from '@/firebase';
+import { redirect } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, isUserLoading } = useUser();
+
+  if (isUserLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    redirect('/login');
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen">
