@@ -62,11 +62,11 @@ export function AddTransactionDialog() {
     setIsSubmitting(true);
     setErrors({});
 
-    if (!user || !firestore) {
+    if (!user || !firestore || !accounts) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "User not authenticated or Firestore not available.",
+        description: "User or account data not available.",
       });
       setIsSubmitting(false);
       return;
@@ -90,12 +90,19 @@ export function AddTransactionDialog() {
 
     const { description, amount, transactionType, category, accountId } = validatedFields.data;
 
+    const sourceAccount = accounts.find(acc => acc.id === accountId);
+    if (!sourceAccount) {
+      toast({ variant: "destructive", title: "Error", description: "Selected account not found." });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
         const batch = writeBatch(firestore);
 
         const transactionAmount = transactionType === 'deposit' ? amount : -amount;
         
-        const transactionRef = doc(collection(firestore, `users/${user.uid}/transactions`));
+        const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
         batch.set(transactionRef, {
             id: transactionRef.id,
             accountId,
@@ -110,7 +117,7 @@ export function AddTransactionDialog() {
         });
 
         const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
-        batch.update(accountRef, { balance: transactionAmount + (accounts?.find(a => a.id === accountId)?.balance || 0) });
+        batch.update(accountRef, { balance: sourceAccount.balance + transactionAmount });
 
         await batch.commit();
 

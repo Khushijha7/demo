@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { PlusCircle, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, writeBatch, query } from "firebase/firestore";
 import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -34,6 +34,7 @@ const InvestmentSchema = z.object({
     quantity: z.coerce.number().min(0, "Quantity cannot be negative."),
     purchasePrice: z.coerce.number().min(0.01, "Purchase price must be positive."),
     purchaseDate: z.date({ required_error: "Purchase date is required." }),
+    accountId: z.string().min(1, "Please select an account.")
 });
 
 type FormErrors = z.ZodFormattedError<z.infer<typeof InvestmentSchema>>;
@@ -49,13 +50,21 @@ export function AddInvestmentDialog() {
   const { user } = useUser();
   const firestore = useFirestore();
 
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/accounts`));
+  }, [user, firestore]);
+
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number; currency: string }>(accountsQuery);
+
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setErrors(null);
 
-    if (!user || !firestore) {
-      toast({ variant: "destructive", title: "Error", description: "User not authenticated." });
+    if (!user || !firestore || !accounts) {
+      toast({ variant: "destructive", title: "Error", description: "User or accounts not available." });
       setIsSubmitting(false);
       return;
     }
@@ -68,6 +77,7 @@ export function AddInvestmentDialog() {
         quantity: formData.get('quantity'),
         purchasePrice: formData.get('purchasePrice'),
         purchaseDate: date,
+        accountId: formData.get('accountId'),
     });
 
     if (!validatedFields.success) {
@@ -76,11 +86,30 @@ export function AddInvestmentDialog() {
         return;
     }
 
-    const { investmentName, tickerSymbol, investmentType, quantity, purchasePrice, purchaseDate } = validatedFields.data;
+    const { investmentName, tickerSymbol, investmentType, quantity, purchasePrice, purchaseDate, accountId } = validatedFields.data;
+
+    const sourceAccount = accounts.find(acc => acc.id === accountId);
+    if (!sourceAccount) {
+      toast({ variant: "destructive", title: "Error", description: "Selected account not found." });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const investmentCost = quantity * purchasePrice;
+
+    if (sourceAccount.balance < investmentCost) {
+        toast({ variant: "destructive", title: "Insufficient Funds", description: `Your ${sourceAccount.accountName} does not have enough funds.` });
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
-        const investmentsCollection = collection(firestore, `users/${user.uid}/investments`);
-        const investmentData = {
+        const batch = writeBatch(firestore);
+
+        // 1. Create Investment
+        const investmentRef = doc(collection(firestore, `users/${user.uid}/investments`));
+        batch.set(investmentRef, {
+            id: investmentRef.id,
             userId: user.uid,
             investmentName,
             tickerSymbol,
@@ -88,15 +117,36 @@ export function AddInvestmentDialog() {
             quantity,
             purchasePrice,
             purchaseDate,
-            currentValue: quantity * purchasePrice, // Initial current value is the purchase value
+            currentValue: investmentCost,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
-        };
+        });
+        
+        // 2. Create Transaction
+        const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
+        batch.set(transactionRef, {
+            id: transactionRef.id,
+            userId: user.uid,
+            accountId: accountId,
+            description: `Purchase of ${investmentName}`,
+            amount: -investmentCost,
+            transactionType: 'withdrawal',
+            category: 'investment',
+            transactionDate: purchaseDate,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
 
-        const docRef = await addDoc(investmentsCollection, investmentData);
-        await updateDoc(doc(firestore, `users/${user.uid}/investments`, docRef.id), { id: docRef.id });
+        // 3. Update Account Balance
+        const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+        batch.update(accountRef, {
+            balance: sourceAccount.balance - investmentCost,
+            updatedAt: serverTimestamp(),
+        });
+        
+        await batch.commit();
 
-        toast({ title: "Success", description: "Investment added successfully." });
+        toast({ title: "Success", description: "Investment added and account balance updated." });
         setOpen(false);
         formRef.current?.reset();
         setDate(undefined);
@@ -198,6 +248,25 @@ export function AddInvestmentDialog() {
                 <Label htmlFor="purchasePrice" className="text-right">Purchase Price</Label>
                  <Input id="purchasePrice" name="purchasePrice" type="number" step="any" placeholder="Price per unit" className="col-span-3" />
                 {errors?.purchasePrice && <p className="col-span-4 text-sm text-red-500 text-right">{errors.purchasePrice._errors[0]}</p>}
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="accountId" className="text-right">
+                    Source Account
+                </Label>
+                 <Select name="accountId">
+                    <SelectTrigger className="col-span-3" aria-describedby="account-error">
+                        <SelectValue placeholder={isLoadingAccounts ? "Loading..." : "Select an account"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {accounts?.map(account => (
+                            <SelectItem key={account.id} value={account.id}>
+                                {account.accountName} ({account.balance.toLocaleString('en-US', { style: 'currency', currency: account.currency || 'USD' })})
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {errors?.accountId && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId._errors[0]}</p>}
             </div>
             
             <DialogFooter>
