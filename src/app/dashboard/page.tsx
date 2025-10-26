@@ -1,0 +1,31 @@
+import { AccountCards } from "@/app/components/dashboard/account-cards";
+import { ExpenseChart } from "@/app/components/dashboard/expense-chart";
+import { InvestmentChart } from "@/app/components/dashboard/investment-chart";
+import { PersonalizedInsights } from "@/app/components/dashboard/personalized-insights";
+import { RecentTransactions } from "@/app/components/dashboard/recent-transactions";
+import { SavingsGoals } from "@/app/components/dashboard/savings-goals";
+
+export default function DashboardPage() {
+  return (
+    <div className="grid gap-6 md:gap-8">
+      <AccountCards />
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-5 xl:grid-cols-3">
+        <div className="lg:col-span-3 xl:col-span-2">
+          <InvestmentChart />
+        </div>
+        <div className="lg:col-span-2 xl:col-span-1">
+          <ExpenseChart />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+           <RecentTransactions />
+        </div>
+        <div>
+           <SavingsGoals />
+        </div>
+      </div>
+      <PersonalizedInsights />
+    </div>
+  );
+}
