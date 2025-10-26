@@ -1,8 +1,9 @@
+
 "use client"
 
 import React from "react";
-import { TrendingUp } from "lucide-react"
-import { CartesianGrid, Line, LineChart as RechartsLineChart, XAxis, YAxis } from "recharts"
+import { TrendingUp, TrendingDown } from "lucide-react"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ReferenceLine } from "recharts"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query, Timestamp } from "firebase/firestore";
 
@@ -21,8 +22,8 @@ import {
 } from "@/components/ui/chart"
 
 const chartConfig = {
-  portfolioValue: {
-    label: "Portfolio Value",
+  gainLoss: {
+    label: "Gain/Loss",
     color: "hsl(var(--primary))",
   },
 }
@@ -31,6 +32,8 @@ interface Investment {
     id: string;
     purchaseDate: Timestamp | string;
     currentValue: number;
+    purchasePrice: number;
+    quantity: number;
 }
 
 export function InvestmentChart() {
@@ -44,9 +47,9 @@ export function InvestmentChart() {
 
   const { data: investments, isLoading } = useCollection<Investment>(investmentsQuery);
 
-  const { chartData, totalValue } = React.useMemo(() => {
+  const { chartData, totalGainLoss, totalGainLossPercent } = React.useMemo(() => {
     if (!investments || investments.length === 0) {
-      return { chartData: [], totalValue: 0 };
+      return { chartData: [], totalGainLoss: 0, totalGainLossPercent: 0 };
     }
 
     const sortedInvestments = [...investments].sort((a, b) => {
@@ -54,19 +57,29 @@ export function InvestmentChart() {
         const dateB = b.purchaseDate instanceof Timestamp ? b.purchaseDate.toMillis() : new Date(b.purchaseDate).getTime();
         return dateA - dateB;
     });
-
-    let cumulativeValue = 0;
+    
+    let cumulativeGainLoss = 0;
+    let totalCost = 0;
     const data = sortedInvestments.map(inv => {
-        cumulativeValue += inv.currentValue;
+        const gainLoss = inv.currentValue - (inv.purchasePrice * inv.quantity);
+        cumulativeGainLoss += gainLoss;
+        totalCost += inv.purchasePrice * inv.quantity;
         const date = inv.purchaseDate instanceof Timestamp ? inv.purchaseDate.toDate() : new Date(inv.purchaseDate);
         return {
             date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            portfolioValue: cumulativeValue,
+            gainLoss: cumulativeGainLoss,
         }
     });
 
-    return { chartData: data, totalValue: cumulativeValue };
+    const finalTotalCost = investments.reduce((sum, inv) => sum + (inv.purchasePrice * inv.quantity), 0);
+    const finalTotalValue = investments.reduce((sum, inv) => sum + inv.currentValue, 0);
+    const finalGainLoss = finalTotalValue - finalTotalCost;
+    const finalGainLossPercent = finalTotalCost > 0 ? (finalGainLoss / finalTotalCost) * 100 : 0;
+
+    return { chartData: data, totalGainLoss: finalGainLoss, totalGainLossPercent: finalGainLossPercent };
   }, [investments]);
+
+  const isGain = totalGainLoss >= 0;
 
   if(isLoading) {
     return (
@@ -109,12 +122,12 @@ export function InvestmentChart() {
       <CardHeader>
         <CardTitle>Investment Performance</CardTitle>
         <CardDescription>
-            Your portfolio is currently valued at {totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}.
+            Your total portfolio gain/loss is {totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} ({totalGainLossPercent.toFixed(2)}%).
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <RechartsLineChart
+          <AreaChart
             accessibilityLayer
             data={chartData}
             margin={{
@@ -139,23 +152,27 @@ export function InvestmentChart() {
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent 
                 formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-                nameKey="portfolioValue"
+                nameKey="gainLoss"
                 labelKey="date"
             />} />
-            <Line
-              dataKey="portfolioValue"
+            <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" />
+            <Area
+              dataKey="gainLoss"
               type="monotone"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={true}
-              name="Portfolio Value"
+              fill={isGain ? "hsl(var(--chart-2))" : "hsl(var(--chart-5))"}
+              fillOpacity={0.4}
+              stroke={isGain ? "hsl(var(--chart-2))" : "hsl(var(--chart-5))"}
+              stackId="a"
             />
-          </RechartsLineChart>
+          </AreaChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="leading-none text-muted-foreground">
-          Showing portfolio value over time.
+         <div className="flex gap-2 font-medium leading-none">
+          {isGain ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+          <div className="text-muted-foreground">
+            Showing total portfolio gain/loss over time
+          </div>
         </div>
       </CardFooter>
     </Card>
