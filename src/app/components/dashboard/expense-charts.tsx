@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { useState } from "react"
@@ -59,7 +58,7 @@ export function ExpenseCharts() {
                     </SelectContent>
                 </Select>
             </CardHeader>
-            <CardContent className="flex-1 flex items-center justify-center">
+            <CardContent className="flex-1 flex items-center justify-center pb-4">
                 <ExpenseChart accountId={selectedAccountId === 'all' ? undefined : selectedAccountId} />
             </CardContent>
         </Card>
