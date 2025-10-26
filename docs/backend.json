@@ -1,0 +1,311 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the FinanceFlow application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a user's financial account (e.g., bank account, credit card, investment account).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the account."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Account)"
+        },
+        "accountName": {
+          "type": "string",
+          "description": "Name of the account (e.g., 'Checking Account', 'Savings Account', 'Visa Credit Card')."
+        },
+        "accountType": {
+          "type": "string",
+          "description": "Type of account (e.g., 'checking', 'savings', 'credit_card', 'investment')."
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance of the account."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the account (e.g., 'USD', 'EUR')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was added.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "accountName",
+        "accountType",
+        "balance",
+        "currency",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a transaction associated with a financial account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Reference to Account. (Relationship: Account 1:N Transaction)"
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "Date of the transaction.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the transaction."
+        },
+        "transactionType": {
+          "type": "string",
+          "description": "Type of transaction (e.g., 'deposit', 'withdrawal', 'payment')."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the transaction (e.g., 'food', 'utilities', 'entertainment')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the transaction was recorded.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the transaction was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "accountId",
+        "transactionDate",
+        "description",
+        "amount",
+        "transactionType",
+        "category",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SavingsGoal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavingsGoal",
+      "type": "object",
+      "description": "Represents a user's savings goal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the savings goal."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N SavingsGoal)"
+        },
+        "goalName": {
+          "type": "string",
+          "description": "Name of the savings goal (e.g., 'Down Payment for House', 'Vacation Fund')."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Target amount to be saved."
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "Current amount saved towards the goal."
+        },
+        "targetDate": {
+          "type": "string",
+          "description": "Target date for achieving the savings goal.",
+          "format": "date-time"
+        },
+        "automaticContributionAmount": {
+          "type": "number",
+          "description": "Amount to automatically contribute to the savings goal on a recurring basis."
+        },
+        "automaticContributionFrequency": {
+          "type": "string",
+          "description": "Frequency of automatic contributions (e.g., 'weekly', 'monthly')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the savings goal was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the savings goal was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "goalName",
+        "targetAmount",
+        "currentAmount",
+        "targetDate",
+        "automaticContributionAmount",
+        "automaticContributionFrequency",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Each document contains user information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}",
+        "definition": {
+          "entityName": "Account",
+          "schema": {
+            "$ref": "#/backend/entities/Account"
+          },
+          "description": "Stores financial accounts for each user. Enforces path-based ownership: only the specified user can access these accounts.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the account."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transactions for each account. Nested hierarchy for clear ownership and simplified security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the account."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/savingsGoals/{savingsGoalId}",
+        "definition": {
+          "entityName": "SavingsGoal",
+          "schema": {
+            "$ref": "#/backend/entities/SavingsGoal"
+          },
+          "description": "Stores savings goals for each user. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "savingsGoalId",
+              "description": "The unique identifier for the savings goal."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User data, accounts, transactions, and savings goals are organized in hierarchical paths under the `users` collection, ensuring clear ownership. Authorization independence is achieved by avoiding `get()` calls in security rules, using path-based ownership for user-specific data. Specifically, the structure uses hierarchical paths to represent `User 1:N Entity` relationships. This design facilitates secure `list` operations due to the homogeneous security posture of documents within each collection. The following structure is designed to support the described application's features, focusing on a simple, robust, and debuggable security ruleset.\n\n- `/users/{userId}`: Stores user profiles. This is a top-level collection that organizes all user-related data.\n- `/users/{userId}/accounts/{accountId}`: Each user has multiple accounts. Path-based ownership is enforced here.\n- `/users/{userId}/accounts/{accountId}/transactions/{transactionId}`: Each account has multiple transactions. Nested hierarchy continues.\n- `/users/{userId}/savingsGoals/{savingsGoalId}`: Each user has multiple saving goals. Path-based ownership is enforced.\n\nThis structure makes security rules straightforward: only the user with the matching `userId` can access data under their respective path.  This eliminates the need for complex `get()` calls in security rules, promoting atomic operations (transactions/batches) and simplifying debugging. The homogeneous security posture ensures that all documents within a collection share the same access requirements, further simplifying rules and enabling secure `list` operations (QAPs)."
+  }
+}

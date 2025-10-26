@@ -1,0 +1,131 @@
+/**
+ * @file Firestore Security Rules for FinanceFlow
+ * @core_philosophy This ruleset enforces a strict user-ownership model. Each user can only access their own data,
+ *  including user profile, accounts, transactions, and savings goals.
+ * @data_structure Data is nested under /users/{userId}, creating a clear hierarchy of ownership.
+ *  Accounts, transactions, and savings goals are stored as subcollections under each user.
+ * @key_security_decisions
+ *   - User listing is disallowed.
+ *   - All data is private to the user, enforced by path-based rules.
+ *   - No admin roles are defined.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if the user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if the authenticated user is the owner of the document
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if the authenticated user is the owner of the existing document
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description Controls access to user profiles. Only the authenticated user can read and write their own profile.
+     * @path /users/{userId}
+     * @allow (create) - User with ID 'user123' can create their profile if authenticated as 'user123'.
+     * @allow (get, update, delete) - User with ID 'user123' can get, update or delete their profile if authenticated as 'user123'.
+     * @deny (create) - User with ID 'user456' cannot create a profile with ID 'user123'.
+     * @deny (get, update, delete) - User with ID 'user456' cannot get, update or delete the profile of user 'user123'.
+     * @principle Enforces document ownership for all operations on user profiles.
+     */
+    match /users/{userId} {
+      // Allow read access to the user's own profile
+      allow get: if isOwner(userId);
+      // Allow listing is not permitted
+      allow list: if false;
+
+      // Allow the user to create their own profile, enforcing userId consistency.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+
+      // Allow the user to update their own profile. Enforce immutability of userId.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow the user to delete their own profile
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to user accounts. Only the owner can create, read, update, and delete their accounts.
+     * @path /users/{userId}/accounts/{accountId}
+     * @allow (create) - User with ID 'user123' can create an account under their profile.
+     * @allow (get, update, delete) - User with ID 'user123' can get, update or delete an account under their profile.
+     * @deny (create) - User with ID 'user456' cannot create an account under user 'user123''s profile.
+     * @deny (get, update, delete) - User with ID 'user456' cannot get, update or delete the accounts of user 'user123'.
+     * @principle Enforces document ownership for all operations on user accounts.
+     */
+    match /users/{userId}/accounts/{accountId} {
+      // Allow the owner to read their accounts
+      allow get: if isOwner(userId);
+      // Allow the owner to list their own accounts
+      allow list: if isOwner(userId);
+
+      // Allow the owner to create accounts
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allow the owner to update their accounts. Enforce immutability of userId.
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+
+      // Allow the owner to delete their accounts
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to transactions. Only the owner can create, read, update, and delete transactions.
+     * @path /users/{userId}/accounts/{accountId}/transactions/{transactionId}
+     * @allow (create) - User with ID 'user123' can create a transaction under their account.
+     * @allow (get, update, delete) - User with ID 'user123' can get, update or delete transactions under their account.
+     * @deny (create) - User with ID 'user456' cannot create a transaction under user 'user123''s account.
+     * @deny (get, update, delete) - User with ID 'user456' cannot get, update or delete the transactions of user 'user123'.
+     * @principle Enforces document ownership for all operations on transactions.
+     */
+    match /users/{userId}/accounts/{accountId}/transactions/{transactionId} {
+      // Allow the owner to read transactions
+      allow get: if isOwner(userId);
+      // Allow the owner to list transactions
+      allow list: if isOwner(userId);
+
+      // Allow the owner to create transactions
+      allow create: if isOwner(userId) && request.resource.data.accountId == accountId;
+
+      // Allow the owner to update transactions.  accountId is implicitly validated because it is part of the path.
+      allow update: if isExistingOwner(userId) && request.resource.data.accountId == accountId;
+
+      // Allow the owner to delete transactions
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Controls access to savings goals. Only the owner can create, read, update, and delete their savings goals.
+     * @path /users/{userId}/savingsGoals/{savingsGoalId}
+     * @allow (create) - User with ID 'user123' can create a savings goal under their profile.
+     * @allow (get, update, delete) - User with ID 'user123' can get, update or delete a savings goal under their profile.
+     * @deny (create) - User with ID 'user456' cannot create a savings goal under user 'user123''s profile.
+     * @deny (get, update, delete) - User with ID 'user456' cannot get, update or delete savings goals of user 'user123'.
+     * @principle Enforces document ownership for all operations on savings goals.
+     */
+    match /users/{userId}/savingsGoals/{savingsGoalId} {
+      // Allow the owner to read their savings goals
+      allow get: if isOwner(userId);
+      // Allow the owner to list their own savings goals
+      allow list: if isOwner(userId);
+
+      // Allow the owner to create savings goals
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allow the owner to update their savings goals. Enforce immutability of userId.
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+
+      // Allow the owner to delete their savings goals
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
