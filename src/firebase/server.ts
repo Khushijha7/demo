@@ -7,10 +7,10 @@ const apps = getApps();
 
 const app = apps.length ? getApp() : initializeApp();
 
-export function getAuth() {
+export async function getAuth() {
   return getAdminAuth(app);
 }
 
-export function getFirestore() {
+export async function getFirestore() {
   return getAdminFirestore(app);
 }
