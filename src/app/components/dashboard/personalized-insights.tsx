@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 import { getPersonalizedInsights } from "@/app/actions";
 import { Bot, Loader2, Sparkles } from "lucide-react";
 
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const initialState = {
@@ -38,7 +38,7 @@ function SubmitButton() {
 }
 
 export function PersonalizedInsights() {
-  const [state, formAction] = useFormState(getPersonalizedInsights, initialState);
+  const [state, formAction] = useActionState(getPersonalizedInsights, initialState);
   const { toast } = useToast();
 
   useEffect(() => {
