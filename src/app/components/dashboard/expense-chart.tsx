@@ -5,7 +5,7 @@ import React from "react"
 import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase"
-import { collectionGroup, query, where } from "firebase/firestore"
+import { collection, query, where, getDocs, collectionGroup } from "firebase/firestore"
 
 import {
   Card,

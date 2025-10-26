@@ -1,112 +1,174 @@
 /**
- * @file Firestore Security Rules for FinanceFlow
- * @core_philosophy This ruleset enforces a strict user-ownership model. Each user can only access their own data.
- * @data_structure All data is nested under /users/{userId}, creating a clear hierarchy of user data, accounts, transactions, and savings goals.
- * @key_security_decisions
- *   - Users can only manage their own profiles and associated data (accounts, transactions, savings goals).
- *   - No public data or shared access is permitted in this initial prototype.
- *   - List operations are restricted to the owner of the data.
- * @denormalization None. The path-based ownership removes the need for data denormalization.
- * @structural_segregation All private user data is stored under /users/{userId}. There are no public collections in this prototype.
+ * @file Firestore Security Rules
+ * @description This ruleset enforces a strict user-ownership model for the FinanceFlow application.
+ * All data is nested under /users/{userId}, ensuring that only the authenticated user can access their own data.
+ *
+ * Data Structure:
+ * - /users/{userId}: User profile information.
+ * - /users/{userId}/accounts/{accountId}: Financial accounts owned by the user.
+ * - /users/{userId}/accounts/{accountId}/transactions/{transactionId}: Transactions for each account.
+ * - /users/{userId}/savingsGoals/{savingsGoalId}: Savings goals defined by the user.
+ *
+ * Key Security Decisions:
+ * - User listing is disallowed for privacy.
+ * - All write operations are strictly limited to the owning user.
+ * - Data consistency between the path and document data is enforced on create and update.
+ * - Flexible on data shapes for prototyping.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Controls access to user profiles.
+     * @description Enforces access control for user profiles.
      * @path /users/{userId}
-     * @allow (create) - Authenticated user can create their profile if the userId matches their auth UID.
-     * @allow (get, update, delete) - Authenticated user can read, update, or delete their profile if the userId matches their auth UID and the document exists.
-     * @deny (create) - If the userId does not match the authenticated user's UID.
-     * @deny (get, update, delete) - If the userId does not match the authenticated user's UID or the document does not exist.
+     * @allow (create) - Authenticated user creates their own profile.
+     * @allow (get, update, delete) - Authenticated user can access and manage their own profile.
+     * @deny (list) - Prevents listing all users.
+     * @deny (create, update, delete) - Non-authenticated user.
+     * @deny (create, update, delete) - Authenticated user trying to access another user's profile.
      * @principle Enforces document ownership for writes.
      */
     match /users/{userId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isExistingOwner(userId);
+      // Allows the user to read their own profile.
+      allow get: if isOwner(userId);
+
+      // Disallows listing all users.
       allow list: if false;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
+
+      // Allows a user to create their own profile if the userId matches their authentication UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+
+      // Allows the user to update their own profile if the userId matches their authentication UID.
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allows the user to delete their own profile if the userId matches their authentication UID.
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to user accounts.
+     * @description Enforces access control for user accounts.
      * @path /users/{userId}/accounts/{accountId}
-     * @allow (create) - Authenticated user can create an account under their profile.
-     * @allow (get, update, delete) - Authenticated user can read, update, or delete their accounts.
-     * @deny (create, get, update, delete) - If the userId does not match the authenticated user's UID.
-     * @principle Restricts access to a user's own data tree.
+     * @allow (create) - Authenticated user creates an account under their profile.
+     * @allow (get, list, update, delete) - Authenticated user can access and manage their own accounts.
+     * @deny (create, update, delete) - Non-authenticated user.
+     * @deny (create, update, delete) - Authenticated user trying to access another user's account.
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId}/accounts/{accountId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isExistingOwner(userId);
+      // Allows the user to read their own accounts.
+      allow get: if isOwner(userId);
+
+      // Allows the user to list their own accounts.
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allows the user to create an account if the userId matches their authentication UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allows the user to update their own account if the userId matches their authentication UID.
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+
+      // Allows the user to delete their own account if the userId matches their authentication UID.
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to transactions for user accounts.
+     * @description Enforces access control for transactions within user accounts.
      * @path /users/{userId}/accounts/{accountId}/transactions/{transactionId}
-     * @allow (create) - Authenticated user can create a transaction under their account.
-     * @allow (get, update, delete) - Authenticated user can read, update, or delete their transactions.
-     * @deny (create, get, update, delete) - If the userId does not match the authenticated user's UID.
-     * @principle Restricts access to a user's own data tree, enforcing data consistency.
+     * @allow (create) - Authenticated user creates a transaction under their account.
+     * @allow (get, list, update, delete) - Authenticated user can access and manage their own transactions.
+     * @deny (create, update, delete) - Non-authenticated user.
+     * @deny (create, update, delete) - Authenticated user trying to access another user's transaction.
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId}/accounts/{accountId}/transactions/{transactionId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isExistingOwner(userId);
+      // Allows the user to read their own transactions.
+      allow get: if isOwner(userId);
+
+      // Allows the user to list their own transactions.
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.accountId == accountId;
-      allow update: if isExistingOwner(userId) && request.resource.data.accountId == resource.data.accountId;
+
+      // Allows the user to create a transaction if the userId matches their authentication UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.accountId in get(/databases/$(database)/documents/users/$(userId)/accounts).data;
+
+      // Allows the user to update their own transaction if the userId matches their authentication UID.
+      allow update: if isExistingOwner(userId);
+
+      // Allows the user to delete their own transaction if the userId matches their authentication UID.
       allow delete: if isExistingOwner(userId);
     }
 
     /**
-     * @description Controls access to savings goals for each user.
+     * @description Enforces access control for savings goals within user profiles.
      * @path /users/{userId}/savingsGoals/{savingsGoalId}
-     * @allow (create) - Authenticated user can create a savings goal under their profile.
-     * @allow (get, update, delete) - Authenticated user can read, update, or delete their savings goals.
-     * @deny (create, get, update, delete) - If the userId does not match the authenticated user's UID.
-     * @principle Restricts access to a user's own data, ensuring data consistency between path and document.
+     * @allow (create) - Authenticated user creates a savings goal under their profile.
+     * @allow (get, list, update, delete) - Authenticated user can access and manage their own savings goals.
+     * @deny (create, update, delete) - Non-authenticated user.
+     * @deny (create, update, delete) - Authenticated user trying to access another user's savings goal.
+     * @principle Enforces document ownership for writes and reads.
      */
     match /users/{userId}/savingsGoals/{savingsGoalId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
       function isOwner(userId) {
-        return request.auth != null && request.auth.uid == userId;
+        return request.auth.uid == userId;
       }
 
       function isExistingOwner(userId) {
         return isOwner(userId) && resource != null;
       }
 
-      allow get: if isExistingOwner(userId);
+      // Allows the user to read their own savings goals.
+      allow get: if isOwner(userId);
+
+      // Allows the user to list their own savings goals.
       allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allows the user to create a savings goal if the userId matches their authentication UID.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userId == userId;
+
+      // Allows the user to update their own savings goal if the userId matches their authentication UID.
       allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+
+      // Allows the user to delete their own savings goal if the userId matches their authentication UID.
       allow delete: if isExistingOwner(userId);
     }
   }
