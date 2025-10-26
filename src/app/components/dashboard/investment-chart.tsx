@@ -36,6 +36,24 @@ interface Investment {
     quantity: number;
 }
 
+const dummyChartData = [
+    { date: 'Jan', gainLoss: 50 },
+    { date: 'Feb', gainLoss: 150 },
+    { date: 'Mar', gainLoss: 250 },
+    { date: 'Apr', gainLoss: 200 },
+    { date: 'May', gainLoss: 300 },
+    { date: 'Jun', gainLoss: 450 },
+    { date: 'Jul', gainLoss: 400 },
+    { date: 'Aug', gainLoss: 550 },
+    { date: 'Sep', gainLoss: 600 },
+    { date: 'Oct', gainLoss: 500 },
+    { date: 'Nov', gainLoss: 700 },
+    { date: 'Dec', gainLoss: 850 },
+];
+const dummyTotalGainLoss = 850;
+const dummyTotalGainLossPercent = 21.25;
+
+
 export function InvestmentChart() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -49,7 +67,11 @@ export function InvestmentChart() {
 
   const { chartData, totalGainLoss, totalGainLossPercent } = React.useMemo(() => {
     if (!investments || investments.length === 0) {
-      return { chartData: [], totalGainLoss: 0, totalGainLossPercent: 0 };
+      return { 
+        chartData: dummyChartData, 
+        totalGainLoss: dummyTotalGainLoss, 
+        totalGainLossPercent: dummyTotalGainLossPercent 
+      };
     }
 
     const sortedInvestments = [...investments].sort((a, b) => {
@@ -59,11 +81,9 @@ export function InvestmentChart() {
     });
     
     let cumulativeGainLoss = 0;
-    let totalCost = 0;
     const data = sortedInvestments.map(inv => {
         const gainLoss = inv.currentValue - (inv.purchasePrice * inv.quantity);
         cumulativeGainLoss += gainLoss;
-        totalCost += inv.purchasePrice * inv.quantity;
         const date = inv.purchaseDate instanceof Timestamp ? inv.purchaseDate.toDate() : new Date(inv.purchaseDate);
         return {
             date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -80,6 +100,7 @@ export function InvestmentChart() {
   }, [investments]);
 
   const isGain = totalGainLoss >= 0;
+  const hasRealData = investments && investments.length > 0;
 
   if(isLoading) {
     return (
@@ -98,31 +119,15 @@ export function InvestmentChart() {
     )
   }
 
-  if (!investments || investments.length === 0) {
-     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Investment Performance</CardTitle>
-                <CardDescription>No investments found. Add one to see your portfolio performance.</CardDescription>
-            </CardHeader>
-             <CardContent className="h-[300px] flex items-center justify-center">
-                <p className="text-muted-foreground">No data to display.</p>
-            </CardContent>
-             <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="leading-none text-muted-foreground">
-                    Add an investment to get started.
-                </div>
-            </CardFooter>
-        </Card>
-     )
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Investment Performance</CardTitle>
         <CardDescription>
-            Your total portfolio gain/loss is {totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} ({totalGainLossPercent.toFixed(2)}%).
+            {hasRealData ? 
+                `Your total portfolio gain/loss is ${totalGainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} (${totalGainLossPercent.toFixed(2)}%).`
+                : "Showing dummy data. Add an investment to see your real performance."
+            }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -171,7 +176,7 @@ export function InvestmentChart() {
          <div className="flex gap-2 font-medium leading-none">
           {isGain ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
           <div className="text-muted-foreground">
-            Showing total portfolio gain/loss over time
+            {hasRealData ? "Showing total portfolio gain/loss over time" : "Showing sample portfolio gain/loss"}
           </div>
         </div>
       </CardFooter>
