@@ -29,6 +29,8 @@ const chartConfig = {
   housing: { label: "Housing", color: "hsl(var(--chart-3))" },
   entertainment: { label: "Entertainment", color: "hsl(var(--chart-4))" },
   utilities: { label: "Utilities", color: "hsl(var(--chart-5))" },
+  investment: { label: "Investment", color: "hsl(var(--chart-2))" },
+  savings: { label: "Savings", color: "hsl(var(--chart-3))" },
   other: { label: "Other", color: "hsl(var(--muted-foreground))" },
 }
 
