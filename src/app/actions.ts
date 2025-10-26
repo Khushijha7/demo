@@ -6,7 +6,7 @@ import {
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { auth, firestore } from "@/firebase/server";
+import { getAuth, getFirestore } from "@/firebase/server";
 import { collection } from "firebase/firestore";
 import { z } from "zod";
 
@@ -88,6 +88,8 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         };
     }
     
+    const auth = getAuth();
+    const firestore = getFirestore();
     const user = auth.currentUser;
     if (!user) {
         return { message: 'Authentication required.', success: false };
