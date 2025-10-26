@@ -6,7 +6,7 @@ import {
   type PersonalizedFinancialInsightsInput,
   type PersonalizedFinancialInsightsOutput,
 } from "@/ai/flows/personalized-financial-insights";
-import { getFirestore, getAuth } from "@/firebase/server";
+import { getFirestore } from "@/firebase/server";
 import { z } from "zod";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -88,12 +88,8 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         };
     }
     
-    const auth = await getAuth();
-    // This is a placeholder for getting the authenticated user's session.
-    // In a real app with proper session management, you would get the user ID from the session.
-    // For now, we are assuming no session is available and thus cannot get the user ID.
-    // We will simulate a user ID for demonstration purposes. In a real scenario, this would
-    // come from a verified token or session.
+    // In a real app, you would get the user ID from the session.
+    // For now, we are using a placeholder.
     const userId = "test-user";
     
     if (!userId) {
@@ -106,10 +102,7 @@ export async function addTransaction(prevState: TransactionState, formData: Form
 
     try {
         const firestore = await getFirestore();
-        const transactionRef = firestore.collection(`users/${userId}/accounts/${accountId}/transactions`).doc();
-        
-        await transactionRef.set({
-            id: transactionRef.id,
+        const transactionData = {
             userId: userId,
             accountId,
             description,
@@ -119,7 +112,10 @@ export async function addTransaction(prevState: TransactionState, formData: Form
             transactionDate: FieldValue.serverTimestamp(),
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+
+        const transactionRef = await firestore.collection(`users/${userId}/accounts/${accountId}/transactions`).add(transactionData);
+        await transactionRef.update({ id: transactionRef.id });
         
         // Also update the account balance
         const accountRef = firestore.doc(`users/${userId}/accounts/${accountId}`);
@@ -171,7 +167,8 @@ export async function addAccount(prevState: AccountState, formData: FormData): P
         };
     }
     
-    // Placeholder for getting the authenticated user.
+    // In a real app, you would get the user ID from a session.
+    // For now, we are using a placeholder.
     const userId = "test-user"; 
     
     if (!userId) {
@@ -182,10 +179,7 @@ export async function addAccount(prevState: AccountState, formData: FormData): P
 
     try {
         const firestore = await getFirestore();
-        const accountRef = firestore.collection(`users/${userId}/accounts`).doc();
-        
-        await accountRef.set({
-            id: accountRef.id,
+        const accountData = {
             userId,
             accountName,
             accountType,
@@ -193,7 +187,10 @@ export async function addAccount(prevState: AccountState, formData: FormData): P
             currency: currency.toUpperCase(),
             createdAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
-        });
+        };
+
+        const accountRef = await firestore.collection(`users/${userId}/accounts`).add(accountData);
+        await accountRef.update({ id: accountRef.id });
 
         return { message: 'Account added successfully.', success: true };
 
