@@ -1,8 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { useActionState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -18,54 +17,111 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Loader2 } from "lucide-react";
-import { addAccount } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFirestore, useUser } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { z } from "zod";
 
-const initialState = {
-  message: null,
-  errors: {},
-  success: false,
+const AccountSchema = z.object({
+    accountName: z.string().min(1, "Account name is required."),
+    accountType: z.enum(["checking", "savings", "credit_card", "investment"], {
+      errorMap: () => ({ message: "Please select an account type." })
+    }),
+    balance: z.coerce.number(),
+    currency: z.string().min(3, "Currency code must be 3 characters.").max(3, "Currency code must be 3 characters."),
+});
+
+type FormErrors = {
+    accountName?: string[];
+    accountType?: string[];
+    balance?: string[];
+    currency?: string[];
 };
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" disabled={pending}>
-            {pending ? (
-                <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                </>
-            ) : (
-                "Add Account"
-            )}
-        </Button>
-    )
-}
-
 export function AddAccountDialog() {
-  const [state, formAction] = useActionState(addAccount, initialState);
   const { toast } = useToast();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
 
-  useEffect(() => {
-    if (state.success) {
-      toast({
-        title: "Success",
-        description: state.message,
-      });
-      setOpen(false);
-      formRef.current?.reset();
-    } else if (state.message && !state.success) {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setErrors({});
+
+    if (!user || !firestore) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: state.message,
+        description: "User not authenticated or Firestore not available.",
       });
+      setIsSubmitting(false);
+      return;
     }
-  }, [state, toast]);
+
+    const formData = new FormData(event.currentTarget);
+    const validatedFields = AccountSchema.safeParse({
+        accountName: formData.get('accountName'),
+        accountType: formData.get('accountType'),
+        balance: formData.get('balance'),
+        currency: formData.get('currency'),
+    });
+
+    if (!validatedFields.success) {
+        const fieldErrors = validatedFields.error.flatten().fieldErrors;
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+    }
+
+    const { accountName, accountType, balance, currency } = validatedFields.data;
+
+    try {
+        const accountsCollection = collection(firestore, `users/${user.uid}/accounts`);
+        const accountData = {
+            userId: user.uid,
+            accountName,
+            accountType,
+            balance,
+            currency: currency.toUpperCase(),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        };
+
+        const accountRef = await addDoc(accountsCollection, accountData);
+        await updateDoc(doc(firestore, `users/${user.uid}/accounts`, accountRef.id), { id: accountRef.id });
+
+        toast({
+            title: "Success",
+            description: "Account added successfully.",
+        });
+        setOpen(false);
+        formRef.current?.reset();
+
+    } catch (e) {
+        console.error("Error adding account:", e);
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Failed to add account. ${errorMessage}`,
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+  
+  // Reset errors when dialog is closed
+  useEffect(() => {
+    if(!open) {
+      setErrors({});
+    }
+  }, [open])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -82,7 +138,7 @@ export function AddAccountDialog() {
             Enter the details of your new financial account.
           </DialogDescription>
         </DialogHeader>
-        <form action={formAction} ref={formRef} className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} ref={formRef} className="grid gap-4 py-4">
            <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="accountName" className="text-right">
                     Account Name
@@ -93,7 +149,7 @@ export function AddAccountDialog() {
                     className="col-span-3"
                     aria-describedby="name-error"
                 />
-                {state.errors?.accountName && <p id="name-error" className="col-span-4 text-sm text-red-500 text-right">{state.errors.accountName[0]}</p>}
+                {errors?.accountName && <p id="name-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountName[0]}</p>}
             </div>
             
             <div className="grid grid-cols-4 items-center gap-4">
@@ -111,7 +167,7 @@ export function AddAccountDialog() {
                         <SelectItem value="investment">Investment</SelectItem>
                     </SelectContent>
                 </Select>
-                {state.errors?.accountType && <p id="type-error" className="col-span-4 text-sm text-red-500 text-right">{state.errors.accountType[0]}</p>}
+                {errors?.accountType && <p id="type-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountType[0]}</p>}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -127,7 +183,7 @@ export function AddAccountDialog() {
                     className="col-span-3"
                      aria-describedby="balance-error"
                 />
-                 {state.errors?.balance && <p id="balance-error" className="col-span-4 text-sm text-red-500 text-right">{state.errors.balance[0]}</p>}
+                 {errors?.balance && <p id="balance-error" className="col-span-4 text-sm text-red-500 text-right">{errors.balance[0]}</p>}
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
@@ -142,11 +198,20 @@ export function AddAccountDialog() {
                     className="col-span-3"
                     aria-describedby="currency-error"
                 />
-                {state.errors?.currency && <p id="currency-error" className="col-span-4 text-sm text-red-500 text-right">{state.errors.currency[0]}</p>}
+                {errors?.currency && <p id="currency-error" className="col-span-4 text-sm text-red-500 text-right">{errors.currency[0]}</p>}
             </div>
             
             <DialogFooter>
-                <SubmitButton />
+                 <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Adding...
+                        </>
+                    ) : (
+                        "Add Account"
+                    )}
+                </Button>
             </DialogFooter>
         </form>
       </DialogContent>
