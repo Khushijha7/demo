@@ -4,9 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
 import { collection, query, Timestamp } from "firebase/firestore";
-import { Target } from "lucide-react";
+import { Target, MoreVertical } from "lucide-react";
 import { format } from "date-fns";
 import { AddFundDialog } from "@/app/dashboard/goals/add-fund-dialog";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { EditGoalDialog } from "@/app/dashboard/goals/edit-goal-dialog";
+import { DeleteGoalDialog } from "@/app/dashboard/goals/delete-goal-dialog";
+
 
 interface SavingsGoal {
     id: string;
@@ -74,18 +79,37 @@ export function SavingsGoals() {
             <div className="text-center text-muted-foreground py-8">
                 <Target className="mx-auto h-12 w-12" />
                 <h3 className="mt-4 text-lg font-semibold">No Savings Goals Yet</h3>
-                <p className="mt-2 text-sm">Click "Add Goal" to start tracking your savings.</p>
+                <p className="mt-2 text-sm">Create a goal to start tracking your savings.</p>
             </div>
           ) : (
             goals.map((goal) => {
               const progress = (goal.currentAmount / goal.targetAmount) * 100;
               return (
-                <div key={goal.id} className="grid gap-2">
+                <div key={goal.id} className="grid gap-2 group">
                   <div className="flex justify-between items-baseline">
                       <h3 className="font-semibold text-sm">{goal.goalName}</h3>
-                      <span className="text-xs text-muted-foreground">
-                          {`$${goal.currentAmount.toLocaleString()} / $${goal.targetAmount.toLocaleString()}`}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                            {`$${goal.currentAmount.toLocaleString()} / $${goal.targetAmount.toLocaleString()}`}
+                        </span>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100">
+                                    <MoreVertical className="h-4 w-4"/>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <EditGoalDialog goal={goal}>
+                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit Goal</DropdownMenuItem>
+                                </EditGoalDialog>
+                                <DeleteGoalDialog goalId={goal.id}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500">Delete Goal</DropdownMenuItem>
+                                </DeleteGoalDialog>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                   </div>
                   <Progress value={progress} aria-label={`${goal.goalName} progress`} />
                    <div className="flex justify-between items-center mt-1">

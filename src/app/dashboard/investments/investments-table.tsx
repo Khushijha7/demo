@@ -17,9 +17,11 @@ import { getRealTimePrice } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { InvestmentActions } from './investment-actions';
 
 interface Investment {
     id: string;
+    userId: string;
     investmentName: string;
     tickerSymbol: string;
     investmentType: string;
@@ -27,6 +29,8 @@ interface Investment {
     purchasePrice: number;
     currentValue: number;
     purchaseDate: Timestamp | string;
+    // This is not in the schema, but useful for mapping
+    associatedTransactionId?: string;
 }
 
 export function InvestmentsTable() {
@@ -89,12 +93,6 @@ export function InvestmentsTable() {
     }
   };
 
-  const formatDate = (date: string | Timestamp) => {
-    if (!date) return 'N/A';
-    const d = typeof date === 'string' ? new Date(date) : date.toDate();
-    return d.toLocaleDateString();
-  };
-
   const totalValue = investments?.reduce((sum, inv) => sum + inv.currentValue, 0) || 0;
   const totalCost = investments?.reduce((sum, inv) => sum + (inv.purchasePrice * inv.quantity), 0) || 0;
   const totalGainLoss = totalValue - totalCost;
@@ -123,7 +121,7 @@ export function InvestmentsTable() {
               <TableHead>Total Cost</TableHead>
               <TableHead>Current Value</TableHead>
               <TableHead className="text-right">Gain/Loss</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -147,10 +145,13 @@ export function InvestmentsTable() {
                     <div>{gainLoss.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
                     <div className="text-xs">({gainLossPercent.toFixed(2)}%)</div>
                 </TableCell>
-                <TableCell className="text-right">
-                   <Button variant="ghost" size="icon" onClick={() => handleRefreshPrices(investment)} disabled={isRefreshing}>
-                     {isRefreshing && refreshingId === investment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4" />}
-                   </Button>
+                <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleRefreshPrices(investment)} disabled={isRefreshing}>
+                            {isRefreshing && refreshingId === investment.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4" />}
+                        </Button>
+                        <InvestmentActions investment={investment} />
+                   </div>
                 </TableCell>
               </TableRow>
             )})}

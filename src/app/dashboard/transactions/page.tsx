@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AddTransactionDialog } from "./add-transaction-dialog";
 import { useAllTransactions } from "@/hooks/use-all-transactions";
 import { Timestamp } from "firebase/firestore";
+import { TransactionActions } from "./transaction-actions";
 
 export default function TransactionsPage() {
   const { transactions, isLoading } = useAllTransactions({
@@ -46,11 +47,12 @@ export default function TransactionsPage() {
               <TableHead className="text-center">Type</TableHead>
               <TableHead className="text-right">Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell></TableRow>}
-            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">No transactions yet.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={6} className="h-24 text-center">Loading...</TableCell></TableRow>}
+            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={6} className="h-24 text-center">No transactions yet.</TableCell></TableRow>}
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
@@ -70,6 +72,9 @@ export default function TransactionsPage() {
                 <TableCell className="text-right">{formatDate(transaction.transactionDate)}</TableCell>
                 <TableCell className={`text-right font-medium ${transaction.amount > 0 ? 'text-green-500' : ''}`}>
                   {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                </TableCell>
+                <TableCell className="text-right">
+                    <TransactionActions transaction={transaction} />
                 </TableCell>
               </TableRow>
             ))}

@@ -2,8 +2,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,19 +30,14 @@ const TransactionSchema = z.object({
     accountId: z.string().min(1, "Please select an account.")
 });
 
-type FormErrors = {
-    description?: string[];
-    amount?: string[];
-    transactionType?: string[];
-    category?: string[];
-    accountId?: string[];
-};
+type FormErrors = z.ZodFormattedError<z.infer<typeof TransactionSchema>>;
+
 
 export function AddTransactionDialog() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<FormErrors | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { user } = useUser();
@@ -55,12 +48,12 @@ export function AddTransactionDialog() {
     return query(collection(firestore, `users/${user.uid}/accounts`));
   }, [user, firestore]);
 
-  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number }>(accountsQuery);
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ id: string, accountName: string; balance: number }>(accountsQuery);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
-    setErrors({});
+    setErrors(null);
 
     if (!user || !firestore || !accounts) {
       toast({
@@ -82,8 +75,7 @@ export function AddTransactionDialog() {
     });
 
     if (!validatedFields.success) {
-        const fieldErrors = validatedFields.error.flatten().fieldErrors;
-        setErrors(fieldErrors);
+        setErrors(validatedFields.error.format());
         setIsSubmitting(false);
         return;
     }
@@ -102,7 +94,7 @@ export function AddTransactionDialog() {
 
         const transactionAmount = transactionType === 'deposit' ? amount : -amount;
         
-        const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
+        const transactionRef = doc(collection(firestore, `users/${user.uid}/transactions`));
         batch.set(transactionRef, {
             id: transactionRef.id,
             accountId,
@@ -127,7 +119,7 @@ export function AddTransactionDialog() {
         });
         setOpen(false);
         formRef.current?.reset();
-        setErrors({});
+        setErrors(null);
 
     } catch (e) {
         console.error("Error adding transaction:", e);
@@ -145,7 +137,7 @@ export function AddTransactionDialog() {
   // Reset errors when dialog is closed
   useEffect(() => {
     if(!open) {
-      setErrors({});
+      setErrors(null);
     }
   }, [open])
 
@@ -181,7 +173,7 @@ export function AddTransactionDialog() {
                         ))}
                     </SelectContent>
                 </Select>
-                {errors?.accountId && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId[0]}</p>}
+                {errors?.accountId?._errors[0] && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId._errors[0]}</p>}
             </div>
 
            <div className="grid grid-cols-4 items-center gap-4">
@@ -194,7 +186,7 @@ export function AddTransactionDialog() {
                     className="col-span-3"
                     aria-describedby="description-error"
                 />
-                {errors?.description && <p id="description-error" className="col-span-4 text-sm text-red-500 text-right">{errors.description[0]}</p>}
+                {errors?.description?._errors[0] && <p id="description-error" className="col-span-4 text-sm text-red-500 text-right">{errors.description._errors[0]}</p>}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="amount" className="text-right">
@@ -208,7 +200,7 @@ export function AddTransactionDialog() {
                     className="col-span-3"
                      aria-describedby="amount-error"
                 />
-                 {errors?.amount && <p id="amount-error" className="col-span-4 text-sm text-red-500 text-right">{errors.amount[0]}</p>}
+                 {errors?.amount?._errors[0] && <p id="amount-error" className="col-span-4 text-sm text-red-500 text-right">{errors.amount._errors[0]}</p>}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
                  <Label htmlFor="transactionType" className="text-right">
@@ -228,7 +220,7 @@ export function AddTransactionDialog() {
                         <Label htmlFor="payment">Payment</Label>
                     </div>
                 </RadioGroup>
-                 {errors?.transactionType && <p id="type-error" className="col-span-4 text-sm text-red-500 text-right">{errors.transactionType[0]}</p>}
+                 {errors?.transactionType?._errors[0] && <p id="type-error" className="col-span-4 text-sm text-red-500 text-right">{errors.transactionType._errors[0]}</p>}
             </div>
              <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">
@@ -240,7 +232,7 @@ export function AddTransactionDialog() {
                     className="col-span-3"
                     aria-describedby="category-error"
                 />
-                {errors?.category && <p id="category-error" className="col-span-4 text-sm text-red-500 text-right">{errors.category[0]}</p>}
+                {errors?.category?._errors[0] && <p id="category-error" className="col-span-4 text-sm text-red-500 text-right">{errors.category._errors[0]}</p>}
             </div>
             <DialogFooter>
                  <Button type="submit" disabled={isSubmitting}>

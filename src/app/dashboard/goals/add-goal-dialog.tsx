@@ -117,7 +117,7 @@ export function AddGoalDialog() {
         
         if (currentAmount > 0 && sourceAccount && accountId) {
              // 2. Create Transaction
-            const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
+            const transactionRef = doc(collection(firestore, `users/${user.uid}/transactions`));
             batch.set(transactionRef, {
                 id: transactionRef.id,
                 userId: user.uid,

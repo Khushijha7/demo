@@ -106,24 +106,8 @@ export function AddInvestmentDialog() {
     try {
         const batch = writeBatch(firestore);
 
-        // 1. Create Investment
-        const investmentRef = doc(collection(firestore, `users/${user.uid}/investments`));
-        batch.set(investmentRef, {
-            id: investmentRef.id,
-            userId: user.uid,
-            investmentName,
-            tickerSymbol,
-            investmentType,
-            quantity,
-            purchasePrice,
-            purchaseDate,
-            currentValue: investmentCost,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-        });
-        
-        // 2. Create Transaction
-        const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
+        // 1. Create Transaction first to get its ID
+        const transactionRef = doc(collection(firestore, `users/${user.uid}/transactions`));
         batch.set(transactionRef, {
             id: transactionRef.id,
             userId: user.uid,
@@ -137,6 +121,23 @@ export function AddInvestmentDialog() {
             updatedAt: serverTimestamp(),
         });
 
+        // 2. Create Investment and link it to the transaction
+        const investmentRef = doc(collection(firestore, `users/${user.uid}/investments`));
+        batch.set(investmentRef, {
+            id: investmentRef.id,
+            userId: user.uid,
+            investmentName,
+            tickerSymbol,
+            investmentType,
+            quantity,
+            purchasePrice,
+            purchaseDate,
+            currentValue: investmentCost,
+            associatedTransactionId: transactionRef.id,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
+        
         // 3. Update Account Balance
         const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
         const newBalance = sourceAccount.accountType === 'credit_card'
@@ -283,5 +284,3 @@ export function AddInvestmentDialog() {
     </Dialog>
   );
 }
-
-    

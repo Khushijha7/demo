@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -109,6 +110,10 @@
           "type": "string",
           "description": "Reference to Account. (Relationship: Account 1:N Transaction)"
         },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. For easier querying."
+        },
         "transactionDate": {
           "type": "string",
           "description": "Date of the transaction.",
@@ -144,6 +149,7 @@
       "required": [
         "id",
         "accountId",
+        "userId",
         "transactionDate",
         "description",
         "amount",
@@ -259,6 +265,10 @@
           "type": "number",
           "description": "Current market value of the total holding (quantity * current price)."
         },
+        "associatedTransactionId": {
+            "type": "string",
+            "description": "The ID of the transaction created for this investment purchase."
+        },
         "createdAt": {
           "type": "string",
           "description": "Timestamp indicating when the investment was added.",
@@ -280,6 +290,7 @@
         "purchasePrice",
         "purchaseDate",
         "currentValue",
+        "associatedTransactionId",
         "createdAt",
         "updatedAt"
       ]
@@ -330,21 +341,17 @@
         }
       },
       {
-        "path": "/users/{userId}/accounts/{accountId}/transactions/{transactionId}",
+        "path": "/users/{userId}/transactions/{transactionId}",
         "definition": {
           "entityName": "Transaction",
           "schema": {
             "$ref": "#/backend/entities/Transaction"
           },
-          "description": "Stores transactions for each account. Nested hierarchy for clear ownership and simplified security rules.",
+          "description": "Stores all transactions for a user in a single collection for easier querying. The `accountId` field links it to the specific account.",
           "params": [
             {
               "name": "userId",
               "description": "The unique identifier for the user."
-            },
-            {
-              "name": "accountId",
-              "description": "The unique identifier for the account."
             },
             {
               "name": "transactionId",
@@ -394,6 +401,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. User data, accounts, transactions, and savings goals are organized in hierarchical paths under the `users` collection, ensuring clear ownership. Authorization independence is achieved by avoiding `get()` calls in security rules, using path-based ownership for user-specific data. Specifically, the structure uses hierarchical paths to represent `User 1:N Entity` relationships. This design facilitates secure `list` operations due to the homogeneous security posture of documents within each collection. The following structure is designed to support the described application's features, focusing on a simple, robust, and debuggable security ruleset.\n\n- `/users/{userId}`: Stores user profiles. This is a top-level collection that organizes all user-related data.\n- `/users/{userId}/accounts/{accountId}`: Each user has multiple accounts. Path-based ownership is enforced here.\n- `/users/{userId}/accounts/{accountId}/transactions/{transactionId}`: Each account has multiple transactions. Nested hierarchy continues.\n- `/users/{userId}/savingsGoals/{savingsGoalId}`: Each user has multiple saving goals. Path-based ownership is enforced.\n\nThis structure makes security rules straightforward: only the user with the matching `userId` can access data under their respective path.  This eliminates the need for complex `get()` calls in security rules, promoting atomic operations (transactions/batches) and simplifying debugging. The homogeneous security posture ensures that all documents within a collection share the same access requirements, further simplifying rules and enabling secure `list` operations (QAPs)."
+    "reasoning": "The Firestore structure is designed for query efficiency and data integrity. A top-level `transactions` collection (`/users/{userId}/transactions`) is introduced to allow fetching all of a user's transactions in a single query, which is more efficient than querying multiple subcollections. This simplifies components like the main transaction list, recent transactions, and the expense chart. Transactions are still linked to accounts via an `accountId` field. Investments now include an `associatedTransactionId` to explicitly link an investment to its purchase transaction, which is critical for reliable edit and delete operations that need to reverse financial actions accurately. All other collections (`accounts`, `savingsGoals`, `investments`) remain nested under the user to enforce clear ownership and simplify security rules."
   }
 }
