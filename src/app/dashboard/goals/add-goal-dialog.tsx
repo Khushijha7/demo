@@ -16,19 +16,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc } from "firebase/firestore";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc, writeBatch, query } from "firebase/firestore";
 import { z } from "zod";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 const SavingsGoalSchema = z.object({
     goalName: z.string().min(1, "Goal name is required."),
     targetAmount: z.coerce.number().min(1, "Target amount must be greater than 0."),
     currentAmount: z.coerce.number().min(0, "Current amount cannot be negative."),
     targetDate: z.date({ required_error: "Target date is required." }),
+    accountId: z.string().optional(),
+}).refine(data => data.currentAmount === 0 || (data.currentAmount > 0 && data.accountId), {
+    message: "An account must be selected if there is a starting amount.",
+    path: ["accountId"],
 });
 
 type FormErrors = z.ZodFormattedError<z.infer<typeof SavingsGoalSchema>>;
@@ -40,9 +45,17 @@ export function AddGoalDialog() {
   const [errors, setErrors] = useState<FormErrors | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [date, setDate] = React.useState<Date>();
+  const [currentAmount, setCurrentAmount] = useState(0);
   
   const { user } = useUser();
   const firestore = useFirestore();
+
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/accounts`));
+  }, [user, firestore]);
+
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string; balance: number; currency: string; accountType: string; }>(accountsQuery);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,6 +74,7 @@ export function AddGoalDialog() {
         targetAmount: formData.get('targetAmount'),
         currentAmount: formData.get('currentAmount'),
         targetDate: date,
+        accountId: formData.get('accountId'),
     });
 
     if (!validatedFields.success) {
@@ -69,11 +83,27 @@ export function AddGoalDialog() {
         return;
     }
 
-    const { goalName, targetAmount, currentAmount, targetDate } = validatedFields.data;
+    const { goalName, targetAmount, currentAmount, targetDate, accountId } = validatedFields.data;
+
+    const sourceAccount = accounts?.find(acc => acc.id === accountId);
+    if (currentAmount > 0 && !sourceAccount) {
+        toast({ variant: "destructive", title: "Error", description: "Selected account not found." });
+        setIsSubmitting(false);
+        return;
+    }
+    
+    if (sourceAccount && sourceAccount.accountType !== 'credit_card' && sourceAccount.balance < currentAmount) {
+        toast({ variant: "destructive", title: "Insufficient Funds", description: `Your ${sourceAccount.accountName} does not have enough funds.` });
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
-        const goalsCollection = collection(firestore, `users/${user.uid}/savingsGoals`);
-        const goalData = {
+        const batch = writeBatch(firestore);
+
+        const goalRef = doc(collection(firestore, `users/${user.uid}/savingsGoals`));
+        batch.set(goalRef, {
+            id: goalRef.id,
             userId: user.uid,
             goalName,
             targetAmount,
@@ -83,15 +113,42 @@ export function AddGoalDialog() {
             updatedAt: serverTimestamp(),
             automaticContributionAmount: 0,
             automaticContributionFrequency: 'none',
-        };
+        });
+        
+        if (currentAmount > 0 && sourceAccount && accountId) {
+             // 2. Create Transaction
+            const transactionRef = doc(collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`));
+            batch.set(transactionRef, {
+                id: transactionRef.id,
+                userId: user.uid,
+                accountId: accountId,
+                description: `Initial contribution to ${goalName}`,
+                amount: -currentAmount,
+                transactionType: 'withdrawal',
+                category: 'savings',
+                transactionDate: new Date(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+            });
 
-        const docRef = await addDoc(goalsCollection, goalData);
-        await updateDoc(doc(firestore, `users/${user.uid}/savingsGoals`, docRef.id), { id: docRef.id });
+            // 3. Update Account Balance
+            const accountRef = doc(firestore, `users/${user.uid}/accounts`, accountId);
+            const newBalance = sourceAccount.accountType === 'credit_card'
+                ? sourceAccount.balance + currentAmount
+                : sourceAccount.balance - currentAmount;
+            batch.update(accountRef, {
+                balance: newBalance,
+                updatedAt: serverTimestamp(),
+            });
+        }
+        
+        await batch.commit();
 
         toast({ title: "Success", description: "Savings goal added successfully." });
         setOpen(false);
         formRef.current?.reset();
         setDate(undefined);
+        setCurrentAmount(0);
 
     } catch (e) {
         console.error("Error adding savings goal:", e);
@@ -106,6 +163,7 @@ export function AddGoalDialog() {
     if(!open) {
       setErrors(null);
       setDate(undefined);
+      setCurrentAmount(0);
     }
   }, [open])
 
@@ -139,7 +197,7 @@ export function AddGoalDialog() {
 
             <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="currentAmount" className="text-right">Current Amount</Label>
-                 <Input id="currentAmount" name="currentAmount" type="number" step="any" placeholder="e.g. 500" defaultValue="0" className="col-span-3" />
+                 <Input id="currentAmount" name="currentAmount" type="number" step="any" placeholder="e.g. 500" defaultValue="0" className="col-span-3" onChange={(e) => setCurrentAmount(parseFloat(e.target.value) || 0)}/>
                 {errors?.currentAmount && <p className="col-span-4 text-sm text-red-500 text-right">{errors.currentAmount._errors[0]}</p>}
             </div>
 
@@ -169,6 +227,27 @@ export function AddGoalDialog() {
                 </Popover>
                  {errors?.targetDate && <p className="col-span-4 text-sm text-red-500 text-right">{errors.targetDate._errors[0]}</p>}
             </div>
+            
+            {currentAmount > 0 && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="accountId" className="text-right">
+                        Source Account
+                    </Label>
+                    <Select name="accountId">
+                        <SelectTrigger className="col-span-3" aria-describedby="account-error">
+                            <SelectValue placeholder={isLoadingAccounts ? "Loading..." : "Select an account"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {accounts?.map(account => (
+                                <SelectItem key={account.id} value={account.id}>
+                                    {account.accountName} ({account.balance.toLocaleString('en-US', { style: 'currency', currency: account.currency || 'USD' })})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors?.accountId && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{errors.accountId._errors[0]}</p>}
+                </div>
+            )}
             
             <DialogFooter>
                  <Button type="submit" disabled={isSubmitting}>
