@@ -41,10 +41,42 @@ import { ThemeToggle } from '../theme-toggle';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
+import { usePathname } from 'next/navigation';
 
 export function AppHeader() {
   const auth = useAuth();
+  const { user } = useUser();
+  const pathname = usePathname();
+  const segments = pathname.split('/').filter(Boolean);
+
+  const getBreadcrumb = () => {
+    if(segments.length === 1 && segments[0] === 'dashboard') {
+        return <BreadcrumbPage>Dashboard</BreadcrumbPage>;
+    }
+    
+    return segments.map((segment, index) => {
+        const href = `/${segments.slice(0, index + 1).join('/')}`;
+        const isLast = index === segments.length - 1;
+        const name = segment.charAt(0).toUpperCase() + segment.slice(1);
+        
+        return (
+            <React.Fragment key={href}>
+                <BreadcrumbItem>
+                    {isLast ? (
+                        <BreadcrumbPage>{name}</BreadcrumbPage>
+                    ) : (
+                        <BreadcrumbLink asChild>
+                            <Link href={href}>{name}</Link>
+                        </BreadcrumbLink>
+                    )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+            </React.Fragment>
+        )
+    })
+  }
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6">
       <SidebarTrigger className="md:hidden"/>
@@ -53,13 +85,11 @@ export function AppHeader() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="#">FinanceFlow</Link>
+                <Link href="/dashboard">FinanceFlow</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Dashboard</BreadcrumbPage>
-            </BreadcrumbItem>
+            {getBreadcrumb()}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
@@ -81,7 +111,7 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="icon" className="rounded-full">
               <Avatar className="h-8 w-8">
-                <AvatarFallback>JD</AvatarFallback>
+                <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <span className="sr-only">Toggle user menu</span>
             </Button>

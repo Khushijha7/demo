@@ -77,7 +77,7 @@ export function AppSidebar() {
               isActive={isActive('/dashboard/accounts')}
               tooltip="Accounts"
             >
-              <Link href="#">
+              <Link href="/dashboard/accounts">
                 <Wallet />
                 <span>Accounts</span>
               </Link>
@@ -89,7 +89,7 @@ export function AppSidebar() {
               isActive={isActive('/dashboard/investments')}
               tooltip="Investments"
             >
-              <Link href="#">
+              <Link href="/dashboard/investments">
                 <TrendingUp />
                 <span>Investments</span>
               </Link>
@@ -101,7 +101,7 @@ export function AppSidebar() {
               isActive={isActive('/dashboard/goals')}
               tooltip="Savings Goals"
             >
-              <Link href="#">
+              <Link href="/dashboard/goals">
                 <Target />
                 <span>Savings Goals</span>
               </Link>
@@ -113,7 +113,7 @@ export function AppSidebar() {
               isActive={isActive('/dashboard/transactions')}
               tooltip="Transactions"
             >
-              <Link href="#">
+              <Link href="/dashboard/transactions">
                 <FileText />
                 <span>Transactions</span>
               </Link>
@@ -125,7 +125,7 @@ export function AppSidebar() {
               isActive={isActive('/dashboard/insights')}
               tooltip="AI Insights"
             >
-              <Link href="#">
+              <Link href="/dashboard/insights">
                 <Bot />
                 <span>AI Insights</span>
               </Link>
@@ -148,7 +148,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <div className="flex items-center gap-3 p-2 rounded-md group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:justify-center">
               <Avatar className="h-9 w-9">
-                <AvatarFallback>{user?.email?.[0].toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{user?.email?.[0].toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                 <span className="text-sm font-semibold">{user?.email}</span>
