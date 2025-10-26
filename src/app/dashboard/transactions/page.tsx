@@ -10,27 +10,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import Link from "next/link";
-import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
-import { collection, query, orderBy, Timestamp } from "firebase/firestore";
 import { AddTransactionDialog } from "./add-transaction-dialog";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collectionGroup, query, orderBy, Timestamp, where } from "firebase/firestore";
 
 export default function TransactionsPage() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  // A real app would have a way to select an account.
-  // For now, we'll assume a hardcoded account ID.
-  // NOTE: This account ID must exist for the user in Firestore.
-  const accountId = "default-account"; 
-
   const transactionsQuery = useMemoFirebase(() => {
     if (!user || !firestore) return null;
-    const transactionsCol = collection(firestore, `users/${user.uid}/accounts/${accountId}/transactions`);
-    return query(transactionsCol, orderBy("transactionDate", "desc"));
-  }, [user, firestore, accountId]);
+    const transactionsColGroup = collectionGroup(firestore, `transactions`);
+    return query(transactionsColGroup, where("userId", "==", user.uid), orderBy("transactionDate", "desc"));
+  }, [user, firestore]);
 
   const { data: transactions, isLoading } = useCollection<{
     id: string;
@@ -38,15 +30,13 @@ export default function TransactionsPage() {
     amount: number;
     transactionType: string;
     category: string;
-    status?: string;
     transactionDate: string | Timestamp;
   }>(transactionsQuery);
 
   const formatDate = (date: string | Timestamp) => {
-    if (typeof date === 'string') {
-      return new Date(date).toLocaleDateString();
-    }
-    return date.toDate().toLocaleDateString();
+     if (!date) return 'N/A';
+    const d = typeof date === 'string' ? new Date(date) : date.toDate();
+    return d.toLocaleDateString();
   };
 
   return (
@@ -58,7 +48,7 @@ export default function TransactionsPage() {
                 A detailed history of your financial activities.
             </CardDescription>
         </div>
-        <AddTransactionDialog accountId={accountId} />
+        <AddTransactionDialog />
       </CardHeader>
       <CardContent>
         <Table>
@@ -72,8 +62,8 @@ export default function TransactionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={5} className="text-center">Loading...</TableCell></TableRow>}
-            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={5} className="text-center">No transactions yet.</TableCell></TableRow>}
+            {isLoading && <TableRow><TableCell colSpan={5} className="h-24 text-center">Loading...</TableCell></TableRow>}
+            {!isLoading && transactions?.length === 0 && <TableRow><TableCell colSpan={5} className="h-24 text-center">No transactions yet.</TableCell></TableRow>}
             {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>

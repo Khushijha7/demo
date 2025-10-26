@@ -8,6 +8,7 @@ import {
 } from "@/ai/flows/personalized-financial-insights";
 import { getAuth, getFirestore } from "@/firebase/server";
 import { z } from "zod";
+import { FieldValue } from "firebase-admin/firestore";
 
 const InsightsSchema = z.object({
   spendingHabits: z.string().min(10, { message: "Please describe your spending habits in more detail." }),
@@ -87,9 +88,16 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         };
     }
     
-    // In a real app, you would get the user from the session.
-    // For now, we are using a hardcoded user ID.
-    const user = { uid: "test-user" }; // FIXME
+    const auth = await getAuth();
+    // In a real app, you would get the user from the session/token.
+    // For this to work, you need to handle auth state properly.
+    // Assuming you have a way to get the current user's ID server-side.
+    // This part is complex and depends on your auth setup (e.g., NextAuth.js, or decoding a token).
+    // For now, this is a placeholder and will not work without a real user object from a session.
+    // FIXME: This needs a proper way to get the authenticated user on the server.
+    // For the demo, we will assume a hardcoded user if no auth is found.
+    // In a real scenario, you'd get the user from a session or by verifying a token.
+    const user = { uid: "test-user" }; // Placeholder
 
     if (!user) {
         return { message: 'Authentication required.', success: false };
@@ -105,20 +113,22 @@ export async function addTransaction(prevState: TransactionState, formData: Form
         const transactionsColRef = firestore.collection(`users/${user.uid}/accounts/${accountId}/transactions`);
         
         await transactionsColRef.add({
+            userId: user.uid, // Add userId for collectionGroup queries
             description,
             amount: transactionAmount,
             transactionType,
             category,
             accountId,
-            transactionDate: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            transactionDate: FieldValue.serverTimestamp(),
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
         });
         
         return { message: 'Transaction added successfully.', success: true };
 
     } catch (e) {
         console.error("Error adding transaction to Firestore:", e);
-        return { message: 'Failed to add transaction.', success: false };
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred.';
+        return { message: `Failed to add transaction. ${errorMessage}`, success: false };
     }
 }

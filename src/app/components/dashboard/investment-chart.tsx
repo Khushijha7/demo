@@ -18,12 +18,12 @@ import {
 } from "@/components/ui/chart"
 
 const chartData = [
-  { month: "January", portfolioValue: 18600 },
-  { month: "February", portfolioValue: 30500 },
-  { month: "March", portfolioValue: 23700 },
-  { month: "April", portfolioValue: 73000 },
-  { month: "May", portfolioValue: 20900 },
-  { month: "June", portfolioValue: 21400 },
+  { month: "January", portfolioValue: 0 },
+  { month: "February", portfolioValue: 0 },
+  { month: "March", portfolioValue: 0 },
+  { month: "April", portfolioValue: 0 },
+  { month: "May", portfolioValue: 0 },
+  { month: "June", portfolioValue: 0 },
 ]
 
 const chartConfig = {
@@ -38,7 +38,7 @@ export function InvestmentChart() {
     <Card>
       <CardHeader>
         <CardTitle>Investment Performance</CardTitle>
-        <CardDescription>Your portfolio has grown by 15.2% over the last 6 months.</CardDescription>
+        <CardDescription>Data is not yet available for your investment portfolio.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -70,11 +70,8 @@ export function InvestmentChart() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4 text-green-500" />
-        </div>
         <div className="leading-none text-muted-foreground">
-          Showing portfolio performance for the last 6 months
+          Showing placeholder data.
         </div>
       </CardFooter>
     </Card>

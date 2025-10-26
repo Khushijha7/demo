@@ -1,54 +1,84 @@
+
+'use client';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Wallet, CreditCard, Landmark, PiggyBank } from "lucide-react";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, query } from "firebase/firestore";
 
-const accountData = [
-  {
-    id: 1,
-    title: "Checking Account",
-    balance: "$5,250.75",
-    change: "+2.5%",
-    icon: Wallet,
-  },
-  {
-    id: 2,
-    title: "Savings Account",
-    balance: "$20,100.00",
-    change: "+1.2%",
-    icon: PiggyBank,
-  },
-  {
-    id: 3,
-    title: "Credit Card",
-    balance: "$-1,234.56",
-    change: "-$50.00",
-    icon: CreditCard,
-  },
-  {
-    id: 4,
-    title: "Investment Portfolio",
-    balance: "$150,890.32",
-    change: "+5.8%",
-    icon: Landmark,
-  },
-];
+const iconMap: { [key: string]: React.ElementType } = {
+  checking: Wallet,
+  savings: PiggyBank,
+  credit_card: CreditCard,
+  investment: Landmark,
+  default: Wallet,
+};
 
 export function AccountCards() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/accounts`));
+  }, [user, firestore]);
+
+  const { data: accounts, isLoading } = useCollection<{
+    accountName: string;
+    balance: number;
+    accountType: string;
+    currency: string;
+  }>(accountsQuery);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <div className="h-4 w-2/3 animate-pulse rounded bg-muted"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 w-1/2 animate-pulse rounded bg-muted"></div>
+              <div className="mt-2 h-3 w-1/3 animate-pulse rounded bg-muted"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+  
+  if (!accounts || accounts.length === 0) {
+    return (
+        <Card className="md:col-span-2 lg:col-span-4">
+            <CardHeader>
+                <CardTitle>No Accounts Found</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>Please add a financial account to get started.</p>
+            </CardContent>
+        </Card>
+    )
+  }
+
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {accountData.map((account) => (
-        <Card key={account.id}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{account.title}</CardTitle>
-            <account.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{account.balance}</div>
-            <p className={`text-xs ${account.change.startsWith('+') ? 'text-green-500' : 'text-red-500'}`}>
-              {account.change} vs last month
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+      {accounts.map((account) => {
+        const Icon = iconMap[account.accountType] || iconMap.default;
+        return (
+          <Card key={account.id}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{account.accountName}</CardTitle>
+              <Icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {account.balance.toLocaleString('en-US', { style: 'currency', currency: account.currency || 'USD' })}
+              </div>
+              <p className="text-xs text-muted-foreground">Current balance</p>
+            </CardContent>
+          </Card>
+        )}
+      )}
     </div>
   );
 }

@@ -1,12 +1,10 @@
 "use client"
 
+import React from "react"
 import { TrendingUp } from "lucide-react"
-import {
-  Label,
-  Pie,
-  PieChart,
-  Sector,
-} from "recharts"
+import { Label, Pie, PieChart } from "recharts"
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase"
+import { collectionGroup, query, where } from "firebase/firestore"
 
 import {
   Card,
@@ -21,52 +19,98 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import React from "react"
-
-const chartData = [
-  { category: "Groceries", expenses: 275, fill: "var(--color-groceries)" },
-  { category: "Transport", expenses: 200, fill: "var(--color-transport)" },
-  { category: "Housing", expenses: 187, fill: "var(--color-housing)" },
-  { category: "Entertainment", expenses: 173, fill: "var(--color-entertainment)" },
-  { category: "Other", expenses: 90, fill: "var(--color-other)" },
-]
 
 const chartConfig = {
   expenses: {
     label: "Expenses",
   },
-  groceries: {
-    label: "Groceries",
-    color: "hsl(var(--chart-1))",
-  },
-  transport: {
-    label: "Transport",
-    color: "hsl(var(--chart-2))",
-  },
-  housing: {
-    label: "Housing",
-    color: "hsl(var(--chart-3))",
-  },
-  entertainment: {
-    label: "Entertainment",
-    color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
-  },
+  groceries: { label: "Groceries", color: "hsl(var(--chart-1))" },
+  transport: { label: "Transport", color: "hsl(var(--chart-2))" },
+  housing: { label: "Housing", color: "hsl(var(--chart-3))" },
+  entertainment: { label: "Entertainment", color: "hsl(var(--chart-4))" },
+  utilities: { label: "Utilities", color: "hsl(var(--chart-5))" },
+  other: { label: "Other", color: "hsl(var(--muted-foreground))" },
 }
 
 export function ExpenseChart() {
-    const totalExpenses = React.useMemo(() => {
-        return chartData.reduce((acc, curr) => acc + curr.expenses, 0)
-    }, [])
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(
+      collectionGroup(firestore, "transactions"),
+      where("userId", "==", user.uid),
+      where("transactionType", "in", ["withdrawal", "payment"])
+    );
+  }, [user, firestore]);
+
+  const { data: transactions, isLoading } = useCollection<{
+    category: string;
+    amount: number;
+  }>(transactionsQuery);
+
+  const chartData = React.useMemo(() => {
+    if (!transactions) return [];
+
+    const expenseByCategory = transactions.reduce((acc, transaction) => {
+      const category = transaction.category.toLowerCase();
+      const amount = Math.abs(transaction.amount);
+      if (!acc[category]) {
+        acc[category] = 0;
+      }
+      acc[category] += amount;
+      return acc;
+    }, {} as { [key: string]: number });
+
+    return Object.entries(expenseByCategory).map(([category, expenses]) => ({
+      category: category.charAt(0).toUpperCase() + category.slice(1),
+      expenses,
+      fill: chartConfig[category as keyof typeof chartConfig]?.color || "hsl(var(--muted-foreground))",
+    }));
+  }, [transactions]);
+  
+  const totalExpenses = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.expenses, 0)
+  }, [chartData])
+
+  if(isLoading) {
+    return (
+        <Card className="flex flex-col h-full">
+            <CardHeader className="items-center pb-0">
+                <div className="h-6 w-3/5 animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-2/5 animate-pulse rounded bg-muted"></div>
+            </CardHeader>
+            <CardContent className="flex-1 pb-0 flex items-center justify-center">
+                 <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-muted"></div>
+            </CardContent>
+            <CardFooter className="flex-col gap-2 text-sm">
+                <div className="h-4 w-4/5 animate-pulse rounded bg-muted"></div>
+                 <div className="h-3 w-3/5 animate-pulse rounded bg-muted"></div>
+            </CardFooter>
+        </Card>
+    )
+  }
+  
+   if (chartData.length === 0) {
+    return (
+      <Card className="flex flex-col h-full">
+        <CardHeader className="items-center">
+          <CardTitle>Expense Breakdown</CardTitle>
+          <CardDescription>No expenses recorded yet.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center">
+          <p className="text-muted-foreground">Add a transaction to see your expense breakdown.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="items-center pb-0">
         <CardTitle>Expense Breakdown</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardDescription>Your spending by category</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -100,7 +144,7 @@ export function ExpenseChart() {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {totalExpenses.toLocaleString()}
+                          {totalExpenses.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
@@ -119,11 +163,8 @@ export function ExpenseChart() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Expenses are 5% down this month <TrendingUp className="h-4 w-4 text-green-500" />
-        </div>
         <div className="leading-none text-muted-foreground">
-          Showing total expenses for the last 6 months
+          Showing total expenses across all accounts
         </div>
       </CardFooter>
     </Card>

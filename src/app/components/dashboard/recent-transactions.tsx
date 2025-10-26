@@ -1,3 +1,4 @@
+'use client';
 import {
   Table,
   TableBody,
@@ -11,53 +12,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-
-const transactions = [
-  {
-    id: "txn_1",
-    description: "Monthly Subscription",
-    date: "2024-06-01",
-    amount: "-$15.99",
-    status: "Completed",
-  },
-  {
-    id: "txn_2",
-    description: "Salary Deposit",
-    date: "2024-06-01",
-    amount: "+$4,500.00",
-    status: "Completed",
-  },
-  {
-    id: "txn_3",
-    description: "Grocery Shopping",
-    date: "2024-06-02",
-    amount: "-$78.50",
-    status: "Completed",
-  },
-  {
-    id: "txn_4",
-    description: "Online Transfer to John D.",
-    date: "2024-06-03",
-    amount: "-$250.00",
-    status: "Pending",
-  },
-    {
-    id: "txn_5",
-    description: "Restaurant Bill",
-    date: "2024-06-04",
-    amount: "-$55.20",
-    status: "Completed",
-  },
-  {
-    id: "txn_6",
-    description: "Stock Dividend",
-    date: "2024-06-05",
-    amount: "+$120.00",
-    status: "Completed",
-  },
-];
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collectionGroup, query, orderBy, limit, where, Timestamp } from "firebase/firestore";
 
 export function RecentTransactions() {
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const transactionsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(
+      collectionGroup(firestore, "transactions"),
+      where("userId", "==", user.uid),
+      orderBy("transactionDate", "desc"),
+      limit(6)
+    );
+  }, [user, firestore]);
+
+  const { data: transactions, isLoading } = useCollection<{
+    id: string;
+    description: string;
+    amount: number;
+    status?: string; // Status is not in our schema, but keeping for UI compatibility
+    transactionDate: string | Timestamp;
+  }>(transactionsQuery);
+
+  const formatDate = (date: string | Timestamp) => {
+    if (!date) return 'N/A';
+    const d = typeof date === 'string' ? new Date(date) : date.toDate();
+    return d.toLocaleDateString();
+  };
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center">
@@ -68,7 +53,7 @@ export function RecentTransactions() {
             </CardDescription>
         </div>
         <Button asChild size="sm" className="ml-auto gap-1">
-            <Link href="#">
+            <Link href="/dashboard/transactions">
                 View All
                 <ArrowUpRight className="h-4 w-4" />
             </Link>
@@ -85,22 +70,34 @@ export function RecentTransactions() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.map((transaction) => (
+            {isLoading && (
+              <TableRow>
+                <TableCell colSpan={4} className="h-24 text-center">Loading...</TableCell>
+              </TableRow>
+            )}
+            {!isLoading && (!transactions || transactions.length === 0) && (
+                 <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                        No recent transactions found.
+                    </TableCell>
+                </TableRow>
+            )}
+            {transactions?.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell>
                   <div className="font-medium">{transaction.description}</div>
                 </TableCell>
                 <TableCell className="text-center">
                   <Badge 
-                    variant={transaction.status === 'Completed' ? 'default' : 'secondary'}
-                    className={`${transaction.status === 'Completed' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
+                    variant={transaction.status === 'Completed' || !transaction.status ? 'default' : 'secondary'}
+                    className={`${transaction.status === 'Completed' || !transaction.status ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
                     >
-                      {transaction.status}
+                      {transaction.status || 'Completed'}
                     </Badge>
                 </TableCell>
-                <TableCell className="text-right">{transaction.date}</TableCell>
-                <TableCell className={`text-right font-medium ${transaction.amount.startsWith('+') ? 'text-green-500' : ''}`}>
-                  {transaction.amount}
+                <TableCell className="text-right">{formatDate(transaction.transactionDate)}</TableCell>
+                <TableCell className={`text-right font-medium ${transaction.amount > 0 ? 'text-green-500' : ''}`}>
+                   {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </TableCell>
               </TableRow>
             ))}

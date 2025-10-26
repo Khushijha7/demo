@@ -21,6 +21,8 @@ import { addTransaction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCollection, useFirestore, useUser, useMemoFirebase } from "@/firebase";
+import { collection, query } from "firebase/firestore";
 
 
 const initialState = {
@@ -45,11 +47,21 @@ function SubmitButton() {
     )
 }
 
-export function AddTransactionDialog({ accountId }: { accountId: string }) {
+export function AddTransactionDialog() {
   const [state, formAction] = useActionState(addTransaction, initialState);
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+
+  const { user } = useUser();
+  const firestore = useFirestore();
+  
+  const accountsQuery = useMemoFirebase(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, `users/${user.uid}/accounts`));
+  }, [user, firestore]);
+
+  const { data: accounts, isLoading: isLoadingAccounts } = useCollection<{ accountName: string }>(accountsQuery);
 
 
   useEffect(() => {
@@ -60,7 +72,7 @@ export function AddTransactionDialog({ accountId }: { accountId: string }) {
       });
       setOpen(false);
       formRef.current?.reset();
-    } else if (state.message) {
+    } else if (state.message && !state.success) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -85,7 +97,25 @@ export function AddTransactionDialog({ accountId }: { accountId: string }) {
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} ref={formRef} className="grid gap-4 py-4">
-           <input type="hidden" name="accountId" value={accountId} />
+           <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="accountId" className="text-right">
+                    Account
+                </Label>
+                 <Select name="accountId">
+                    <SelectTrigger className="col-span-3" aria-describedby="account-error">
+                        <SelectValue placeholder={isLoadingAccounts ? "Loading..." : "Select an account"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {accounts?.map(account => (
+                            <SelectItem key={account.id} value={account.id}>
+                                {account.accountName}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                {state.errors?.accountId && <p id="account-error" className="col-span-4 text-sm text-red-500 text-right">{state.errors.accountId[0]}</p>}
+            </div>
+
            <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">
                     Description
