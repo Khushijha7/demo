@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 
 export default function AccountsPage() {
   return (
-    <div className="grid gap-6">
+    <div className="w-full">
       <Card>
         <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
