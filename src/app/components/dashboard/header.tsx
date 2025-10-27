@@ -86,7 +86,7 @@ export function AppHeader() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/dashboard">FinanceFlow</Link>
+                <Link href="/dashboard">Fintrac</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

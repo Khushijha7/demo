@@ -53,7 +53,7 @@ export function AppSidebar() {
             <path d="M2 12l10 5 10-5"></path>
           </svg>
           <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden">
-            FinanceFlow
+            Fintrac
           </span>
         </Link>
       </SidebarHeader>

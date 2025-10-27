@@ -1,0 +1,406 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the Fintrac application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Account": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Account",
+      "type": "object",
+      "description": "Represents a user's financial account (e.g., bank account, credit card, investment account).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the account."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Account)"
+        },
+        "accountName": {
+          "type": "string",
+          "description": "Name of the account (e.g., 'Checking Account', 'Savings Account', 'Visa Credit Card')."
+        },
+        "accountType": {
+          "type": "string",
+          "description": "Type of account (e.g., 'checking', 'savings', 'credit_card', 'investment')."
+        },
+        "balance": {
+          "type": "number",
+          "description": "Current balance of the account."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the account (e.g., 'USD', 'EUR')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was added.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "accountName",
+        "accountType",
+        "balance",
+        "currency",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a transaction associated with a financial account.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "accountId": {
+          "type": "string",
+          "description": "Reference to Account. (Relationship: Account 1:N Transaction)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. For easier querying."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "Date of the transaction.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the transaction."
+        },
+        "transactionType": {
+          "type": "string",
+          "description": "Type of transaction (e.g., 'deposit', 'withdrawal', 'payment')."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category of the transaction (e.g., 'food', 'utilities', 'entertainment')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the transaction was recorded.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the transaction was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "accountId",
+        "userId",
+        "transactionDate",
+        "description",
+        "amount",
+        "transactionType",
+        "category",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "SavingsGoal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavingsGoal",
+      "type": "object",
+      "description": "Represents a user's savings goal.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the savings goal."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N SavingsGoal)"
+        },
+        "goalName": {
+          "type": "string",
+          "description": "Name of the savings goal (e.g., 'Down Payment for House', 'Vacation Fund')."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "Target amount to be saved."
+        },
+        "currentAmount": {
+          "type": "number",
+          "description": "Current amount saved towards the goal."
+        },
+        "targetDate": {
+          "type": "string",
+          "description": "Target date for achieving the savings goal.",
+          "format": "date-time"
+        },
+        "automaticContributionAmount": {
+          "type": "number",
+          "description": "Amount to automatically contribute to the savings goal on a recurring basis."
+        },
+        "automaticContributionFrequency": {
+          "type": "string",
+          "description": "Frequency of automatic contributions (e.g., 'weekly', 'monthly')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the savings goal was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the savings goal was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "goalName",
+        "targetAmount",
+        "currentAmount",
+        "targetDate",
+        "automaticContributionAmount",
+        "automaticContributionFrequency",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Investment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Investment",
+      "type": "object",
+      "description": "Represents a user's investment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the investment."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User."
+        },
+        "investmentName": {
+          "type": "string",
+          "description": "Name of the investment (e.g., 'Apple Stock', 'Bitcoin')."
+        },
+        "tickerSymbol": {
+          "type": "string",
+          "description": "The stock ticker symbol (e.g., AAPL, BTC)."
+        },
+        "investmentType": {
+          "type": "string",
+          "description": "Type of investment (e.g., 'stock', 'etf', 'crypto', 'other')."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Number of shares or units."
+        },
+        "purchasePrice": {
+          "type": "number",
+          "description": "Price per unit at the time of purchase."
+        },
+        "purchaseDate": {
+          "type": "string",
+          "description": "Date the investment was purchased.",
+          "format": "date-time"
+        },
+        "currentValue": {
+          "type": "number",
+          "description": "Current market value of the total holding (quantity * current price)."
+        },
+        "associatedTransactionId": {
+            "type": "string",
+            "description": "The ID of the transaction created for this investment purchase."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the investment was added.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the investment was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "investmentName",
+        "tickerSymbol",
+        "investmentType",
+        "quantity",
+        "purchasePrice",
+        "purchaseDate",
+        "currentValue",
+        "associatedTransactionId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Each document contains user information.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/accounts/{accountId}",
+        "definition": {
+          "entityName": "Account",
+          "schema": {
+            "$ref": "#/backend/entities/Account"
+          },
+          "description": "Stores financial accounts for each user. Enforces path-based ownership: only the specified user can access these accounts.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "accountId",
+              "description": "The unique identifier for the account."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores all transactions for a user in a single collection for easier querying. The `accountId` field links it to the specific account.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier for the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/savingsGoals/{savingsGoalId}",
+        "definition": {
+          "entityName": "SavingsGoal",
+          "schema": {
+            "$ref": "#/backend/entities/SavingsGoal"
+          },
+          "description": "Stores savings goals for each user. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "savingsGoalId",
+              "description": "The unique identifier for the savings goal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/investments/{investmentId}",
+        "definition": {
+          "entityName": "Investment",
+          "schema": {
+            "$ref": "#/backend/entities/Investment"
+          },
+          "description": "Stores investments for each user. Enforces path-based ownership.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "investmentId",
+              "description": "The unique identifier for the investment."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed for query efficiency and data integrity. A top-level `transactions` collection (`/users/{userId}/transactions`) is introduced to allow fetching all of a user's transactions in a single query, which is more efficient than querying multiple subcollections. This simplifies components like the main transaction list, recent transactions, and the expense chart. Transactions are still linked to accounts via an `accountId` field. Investments now include an `associatedTransactionId` to explicitly link an investment to its purchase transaction, which is critical for reliable edit and delete operations that need to reverse financial actions accurately. All other collections (`accounts`, `savingsGoals`, `investments`) remain nested under the user to enforce clear ownership and simplify security rules."
+  }
+}
