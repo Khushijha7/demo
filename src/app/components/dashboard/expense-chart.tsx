@@ -66,7 +66,7 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
 
   if(isLoading) {
     return (
-      <div className="flex items-center justify-center h-full min-h-[350px]">
+      <div className="flex items-center justify-center h-full min-h-[250px]">
         <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-muted"></div>
       </div>
     )
@@ -74,11 +74,11 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   
    if (chartData.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[350px]">
+      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[250px]">
           <div className="flex flex-col items-center gap-1 text-center">
               <h3 className="text-2xl font-bold tracking-tight">No expenses recorded</h3>
               <p className="text-sm text-muted-foreground">
-                  No expense transactions found for the selected account.
+                  You have not recorded any expenses yet.
               </p>
           </div>
       </div>
@@ -88,7 +88,7 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square max-h-[350px]"
+      className="mx-auto aspect-square min-h-[250px] w-full h-full"
     >
       <PieChart>
         <ChartTooltip
