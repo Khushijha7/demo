@@ -2,18 +2,9 @@
 "use client"
 
 import React from "react"
-import { TrendingUp } from "lucide-react"
 import { Label, Pie, PieChart } from "recharts"
 import { useAllTransactions } from "@/hooks/use-all-transactions";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import {
   ChartContainer,
   ChartTooltip,
@@ -42,8 +33,8 @@ interface ExpenseChartProps {
 export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   const { transactions, isLoading } = useAllTransactions();
 
-  const chartData = React.useMemo(() => {
-    if (!transactions) return [];
+  const { chartData, totalExpenses } = React.useMemo(() => {
+    if (!transactions) return { chartData: [], totalExpenses: 0 };
 
     const filteredTransactions = accountId
       ? transactions.filter(t => t.accountId === accountId)
@@ -61,16 +52,17 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
       return acc;
     }, {} as { [key: string]: number });
 
-    return Object.entries(expenseByCategory).map(([category, expenses]) => ({
+    const data = Object.entries(expenseByCategory).map(([category, expenses]) => ({
       category: category.charAt(0).toUpperCase() + category.slice(1),
       expenses,
       fill: chartConfig[category as keyof typeof chartConfig]?.color || "hsl(var(--muted-foreground))",
     }));
+
+    const total = data.reduce((acc, curr) => acc + curr.expenses, 0)
+    
+    return { chartData: data, totalExpenses: total };
   }, [transactions, accountId]);
   
-  const totalExpenses = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.expenses, 0)
-  }, [chartData])
 
   if(isLoading) {
     return (
@@ -86,7 +78,7 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
           <div className="flex flex-col items-center gap-1 text-center">
               <h3 className="text-2xl font-bold tracking-tight">No expenses recorded</h3>
               <p className="text-sm text-muted-foreground">
-                  Add a transaction to see your expense breakdown.
+                  No expense transactions found for the selected account.
               </p>
           </div>
       </div>
