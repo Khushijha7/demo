@@ -1,0 +1,16 @@
+{
+  "node": {
+    "40f0a514117c65c97ef8a4fb050514c2f5b9509a41": {
+      "workers": {
+        "app/dashboard/investments/page": {
+          "moduleId": "[project]/.next-internal/server/app/dashboard/investments/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/dashboard/investments/page": "action-browser"
+      }
+    }
+  },
+  "edge": {}
+}
