@@ -1,5 +1,5 @@
 export const firebaseConfig = {
-  apiKey: "AIzaSyBTZ56IW7z_WZIre0SXUfIuzNBorbigBWQ",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: "fintrack-project-9a74c.firebaseapp.com",
   projectId: "fintrack-project-9a74c",
   storageBucket: "fintrack-project-9a74c.firebasestorage.app",

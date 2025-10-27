@@ -37,8 +37,8 @@ export function AppSidebar() {
       collapsible="icon"
       variant="sidebar"
     >
-      <SidebarHeader className="h-16 flex items-center">
-        <Link href="/dashboard" className="flex gap-2 align-start">
+      <SidebarHeader className="h-16 flex items-start">
+        <Link href="/dashboard" className="flex gap-2 items-start">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
