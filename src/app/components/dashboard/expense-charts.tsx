@@ -25,6 +25,11 @@ export function ExpenseCharts() {
 
     const { data: accounts, isLoading } = useCollection<Account>(accountsQuery);
 
+    const selectedAccountName = selectedAccountId === 'all' 
+        ? 'All Accounts' 
+        : accounts?.find(acc => acc.id === selectedAccountId)?.accountName || '...';
+
+
     if (isLoading) {
         return (
             <Card className="flex flex-col h-full">
@@ -42,9 +47,9 @@ export function ExpenseCharts() {
     return (
         <Card className="flex flex-col h-full">
             <CardHeader className="items-center">
-                 <div className="flex flex-col items-center gap-2 text-center">
+                <div className="flex flex-col items-center gap-2 text-center">
                     <CardTitle>Expense Breakdown</CardTitle>
-                    <CardDescription>Your spending by category.</CardDescription>
+                    <CardDescription>Select an account to view its expense breakdown.</CardDescription>
                 </div>
                 <Select value={selectedAccountId} onValueChange={setSelectedAccountId}>
                     <SelectTrigger className="w-[200px] mt-4">
