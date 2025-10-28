@@ -37,8 +37,8 @@ export function AppSidebar() {
       collapsible="icon"
       variant="sidebar"
     >
-      <SidebarHeader className="h-16 flex items-start">
-        <Link href="/dashboard" className="flex gap-2 items-start">
+      <SidebarHeader className="flex items-start p-2">
+        <Link href="/dashboard" className="flex gap-2 align-start">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -137,13 +137,13 @@ export function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
            <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Settings">
-              <Link href="#"><Settings /><span>Settings</span></Link>
+            <SidebarMenuButton asChild tooltip="Settings" isActive={isActive('/dashboard/settings')}>
+              <Link href="/dashboard/settings"><Settings /><span>Settings</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
            <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Support">
-              <Link href="#"><LifeBuoy /><span>Support</span></Link>
+            <SidebarMenuButton asChild tooltip="Support" isActive={isActive('/dashboard/support')}>
+              <Link href="/dashboard/support"><LifeBuoy /><span>Support</span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
