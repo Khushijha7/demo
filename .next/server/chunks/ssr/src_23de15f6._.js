@@ -1209,18 +1209,18 @@ function ExpenseChart({ accountId, className }) {
                 className: "h-[200px] w-[200px] animate-pulse rounded-full bg-muted"
             }, void 0, false, {
                 fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                lineNumber: 70,
+                lineNumber: 71,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-            lineNumber: 69,
+            lineNumber: 70,
             columnNumber: 7
         }, this);
     }
     if (chartData.length === 0) {
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-            className: "flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[250px]",
+            className: "flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[250px] h-[300px]",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                 className: "flex flex-col items-center gap-1 text-center",
                 children: [
@@ -1229,7 +1229,7 @@ function ExpenseChart({ accountId, className }) {
                         children: "No expenses recorded"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                        lineNumber: 79,
+                        lineNumber: 80,
                         columnNumber: 15
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1237,24 +1237,24 @@ function ExpenseChart({ accountId, className }) {
                         children: "You have not recorded any expenses yet."
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                        lineNumber: 80,
+                        lineNumber: 81,
                         columnNumber: 15
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                lineNumber: 78,
+                lineNumber: 79,
                 columnNumber: 11
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-            lineNumber: 77,
+            lineNumber: 78,
             columnNumber: 7
         }, this);
     }
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$chart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ChartContainer"], {
         config: chartConfig,
-        className: "mx-auto aspect-square min-h-[250px] w-full h-full",
+        className: "mx-auto aspect-square h-[300px] w-full",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$chart$2f$PieChart$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["PieChart"], {
             children: [
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$chart$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["ChartTooltip"], {
@@ -1263,12 +1263,12 @@ function ExpenseChart({ accountId, className }) {
                         hideLabel: true
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                        lineNumber: 96,
+                        lineNumber: 97,
                         columnNumber: 20
                     }, void 0)
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                    lineNumber: 94,
+                    lineNumber: 95,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$recharts$2f$es6$2f$polar$2f$Pie$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Pie"], {
@@ -1296,7 +1296,7 @@ function ExpenseChart({ accountId, className }) {
                                             })
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                                            lineNumber: 115,
+                                            lineNumber: 116,
                                             columnNumber: 21
                                         }, void 0),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("tspan", {
@@ -1306,36 +1306,36 @@ function ExpenseChart({ accountId, className }) {
                                             children: "Total Expenses"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                                            lineNumber: 122,
+                                            lineNumber: 123,
                                             columnNumber: 21
                                         }, void 0)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                                    lineNumber: 109,
+                                    lineNumber: 110,
                                     columnNumber: 19
                                 }, void 0);
                             }
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                        lineNumber: 105,
+                        lineNumber: 106,
                         columnNumber: 11
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-                    lineNumber: 98,
+                    lineNumber: 99,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-            lineNumber: 93,
+            lineNumber: 94,
             columnNumber: 7
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/components/dashboard/expense-chart.tsx",
-        lineNumber: 89,
+        lineNumber: 90,
         columnNumber: 5
     }, this);
 }
@@ -1413,7 +1413,7 @@ function ExpenseCharts() {
         className: "flex flex-col h-full",
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardHeader"], {
-                className: "items-center",
+                className: "items-center pb-0",
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$ui$2f$card$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["CardTitle"], {
                         children: "Expense Breakdown"

@@ -89,7 +89,7 @@ export function AccountCards() {
                </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold break-words">
                 {account.balance.toLocaleString('en-US', { style: 'currency', currency: account.currency || 'USD' })}
               </div>
               <p className="text-xs text-muted-foreground">Current balance</p>
