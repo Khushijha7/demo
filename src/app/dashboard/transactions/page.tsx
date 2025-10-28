@@ -29,8 +29,8 @@ export default function TransactionsPage() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center">
-        <div className="grid gap-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="grid gap-2 flex-1">
             <CardTitle>Transactions</CardTitle>
             <CardDescription>
                 A detailed history of your financial activities.
@@ -38,16 +38,16 @@ export default function TransactionsPage() {
         </div>
         <AddTransactionDialog />
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Transaction</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-center">Type</TableHead>
+              <TableHead className="hidden sm:table-cell">Category</TableHead>
+              <TableHead className="text-center hidden md:table-cell">Type</TableHead>
               <TableHead className="text-right">Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right hidden sm:table-cell">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -57,11 +57,14 @@ export default function TransactionsPage() {
               <TableRow key={transaction.id}>
                 <TableCell>
                   <div className="font-medium">{transaction.description}</div>
+                  <div className="text-sm text-muted-foreground sm:hidden">
+                    {transaction.category}
+                  </div>
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                    <Badge variant="outline">{transaction.category}</Badge>
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center hidden md:table-cell">
                   <Badge 
                     variant={transaction.transactionType === 'deposit' ? 'default' : 'secondary'}
                     className={`${transaction.transactionType === 'deposit' ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : ''}`}
@@ -73,7 +76,7 @@ export default function TransactionsPage() {
                 <TableCell className={`text-right font-medium ${transaction.amount > 0 ? 'text-green-500' : ''}`}>
                   {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right hidden sm:table-cell">
                     <TransactionActions transaction={transaction} />
                 </TableCell>
               </TableRow>

@@ -35,7 +35,7 @@ export function AccountCards() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -53,7 +53,7 @@ export function AccountCards() {
   
   if (!accounts || accounts.length === 0) {
     return (
-        <Card className="md:col-span-2 lg:col-span-4">
+        <Card className="sm:col-span-2 lg:col-span-4">
             <CardHeader>
                 <CardTitle>No Accounts Found</CardTitle>
             </CardHeader>
@@ -65,7 +65,7 @@ export function AccountCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {accounts.map((account) => {
         const Icon = iconMap[account.accountType] || iconMap.default;
         return (

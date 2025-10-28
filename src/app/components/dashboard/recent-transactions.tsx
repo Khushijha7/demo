@@ -45,13 +45,13 @@ export function RecentTransactions() {
             </Link>
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Transaction</TableHead>
-              <TableHead className="text-center">Status</TableHead>
-              <TableHead className="text-right">Date</TableHead>
+              <TableHead className="text-center hidden sm:table-cell">Status</TableHead>
+              <TableHead className="text-right hidden md:table-cell">Date</TableHead>
               <TableHead className="text-right">Amount</TableHead>
             </TableRow>
           </TableHeader>
@@ -72,8 +72,9 @@ export function RecentTransactions() {
               <TableRow key={transaction.id}>
                 <TableCell>
                   <div className="font-medium">{transaction.description}</div>
+                  <div className="text-sm text-muted-foreground md:hidden">{formatDate(transaction.transactionDate)}</div>
                 </TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-center hidden sm:table-cell">
                   <Badge 
                     variant={'default'}
                     className={'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}
@@ -81,7 +82,7 @@ export function RecentTransactions() {
                       Completed
                     </Badge>
                 </TableCell>
-                <TableCell className="text-right">{formatDate(transaction.transactionDate)}</TableCell>
+                <TableCell className="text-right hidden md:table-cell">{formatDate(transaction.transactionDate)}</TableCell>
                 <TableCell className={`text-right font-medium ${transaction.amount > 0 ? 'text-green-500' : ''}`}>
                    {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 </TableCell>

@@ -1,10 +1,5 @@
 {
-  "/dashboard/accounts/page": "app/dashboard/accounts/page.js",
-  "/dashboard/goals/page": "app/dashboard/goals/page.js",
-  "/dashboard/insights/page": "app/dashboard/insights/page.js",
-  "/dashboard/investments/page": "app/dashboard/investments/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/dashboard/transactions/page": "app/dashboard/transactions/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/login/page": "app/login/page.js",
   "/page": "app/page.js"

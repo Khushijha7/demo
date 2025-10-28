@@ -126,26 +126,26 @@ export function InvestmentsTable() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center">
-        <div className="grid gap-2">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="grid gap-2 flex-1">
             <CardTitle>Your Portfolio</CardTitle>
             <CardDescription>
                 A detailed view of your current investments.
             </CardDescription>
         </div>
-        <Button size="sm" className="ml-auto gap-1" onClick={() => handleRefreshPrices()} disabled={isRefreshing || isLoading}>
+        <Button size="sm" className="w-full sm:w-auto gap-1" onClick={() => handleRefreshPrices()} disabled={isRefreshing || isLoading}>
             {isRefreshing && !refreshingId ? <Loader2 className="h-4 w-4 animate-spin"/> : <RefreshCw className="h-4 w-4" />}
             Refresh All
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Investment</TableHead>
-              <TableHead>Total Cost</TableHead>
+              <TableHead className="hidden sm:table-cell">Total Cost</TableHead>
               <TableHead>Current Value</TableHead>
-              <TableHead>Source Account</TableHead>
+              <TableHead className="hidden md:table-cell">Source Account</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -161,9 +161,9 @@ export function InvestmentsTable() {
                     <div className="font-medium">{investment.investmentName} ({investment.tickerSymbol})</div>
                     <div className="text-sm text-muted-foreground">{investment.quantity} shares @ {investment.purchasePrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
                 </TableCell>
-                <TableCell>{cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                <TableCell className="hidden sm:table-cell">{cost.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 <TableCell>{investment.currentValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                <TableCell>{investment.sourceAccountName}</TableCell>
+                <TableCell className="hidden md:table-cell">{investment.sourceAccountName}</TableCell>
                 <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
                         <Button variant="ghost" size="icon" onClick={() => handleRefreshPrices(investment)} disabled={isRefreshing}>
@@ -177,7 +177,7 @@ export function InvestmentsTable() {
              {!isLoading && investments && investments.length > 0 && (
                 <TableRow className="font-bold bg-muted/50">
                     <TableCell colSpan={3} className="text-right">Total Portfolio Value</TableCell>
-                    <TableCell colSpan={2}>{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                    <TableCell colSpan={2} className="text-left">{totalValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                 </TableRow>
              )}
           </TableBody>

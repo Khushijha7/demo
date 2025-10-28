@@ -1,3 +1,4 @@
+
 import { AccountCards } from "@/app/components/dashboard/account-cards";
 import { ExpenseCharts } from "@/app/components/dashboard/expense-charts";
 import { InvestmentChart } from "@/app/components/dashboard/investment-chart";
@@ -7,17 +8,17 @@ import { SavingsGoals } from "@/app/components/dashboard/savings-goals";
 
 export default function DashboardPage() {
   return (
-    <div className="grid gap-6 md:gap-8">
+    <div className="grid gap-4 md:gap-8">
       <AccountCards />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="md:col-span-1">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-3">
           <InvestmentChart />
         </div>
-        <div className="md:col-span-1">
+        <div className="lg:col-span-2">
            <ExpenseCharts />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
            <RecentTransactions />
         </div>
