@@ -10,6 +10,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const chartConfig = {
   expenses: {
@@ -74,7 +75,7 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   
    if (chartData.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[250px]">
+      <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm min-h-[250px] h-[300px]">
           <div className="flex flex-col items-center gap-1 text-center">
               <h3 className="text-2xl font-bold tracking-tight">No expenses recorded</h3>
               <p className="text-sm text-muted-foreground">
@@ -88,7 +89,7 @@ export function ExpenseChart({ accountId, className }: ExpenseChartProps) {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square min-h-[250px] w-full h-full"
+      className="mx-auto aspect-square h-[300px] w-full"
     >
       <PieChart>
         <ChartTooltip

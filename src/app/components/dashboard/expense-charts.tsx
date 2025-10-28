@@ -26,7 +26,7 @@ export function ExpenseCharts() {
     
     return (
         <Card className="flex flex-col h-full">
-            <CardHeader className="items-center">
+            <CardHeader className="items-center pb-0">
                 <CardTitle>Expense Breakdown</CardTitle>
                 <CardDescription>A summary of your expenses across all accounts.</CardDescription>
             </CardHeader>
