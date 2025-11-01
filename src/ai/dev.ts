@@ -1,5 +1,9 @@
-import { config } from 'dotenv';
+'use server';
+
+import {config} from 'dotenv';
 config();
 
-import '@/ai/flows/personalized-financial-insights.ts';
-import '@/ai/flows/get-market-data.ts';
+// This file is used to register all Genkit flows for development.
+// It is not used in production.
+import './flows/get-market-data';
+import './flows/personalized-financial-insights';

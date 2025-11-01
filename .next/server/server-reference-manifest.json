@@ -2,12 +2,17 @@
   "node": {
     "60f3022733ccdb177134934baac7deb830832ae0c3": {
       "workers": {
+        "app/dashboard/insights/page": {
+          "moduleId": "[project]/.next-internal/server/app/dashboard/insights/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        },
         "app/dashboard/page": {
           "moduleId": "[project]/.next-internal/server/app/dashboard/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
           "async": false
         }
       },
       "layer": {
+        "app/dashboard/insights/page": "action-browser",
         "app/dashboard/page": "action-browser"
       }
     }
